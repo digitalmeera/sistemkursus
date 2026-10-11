@@ -287,7 +287,7 @@ export class GasApiService {
 
           if (Array.isArray(raw.peserta)) {
             normPeserta = raw.peserta.map((r: any) => this.normalizePesertaRow(r));
-            this.saveLocalPeserta(normPeserta);
+            this.saveLocalPeserta(normPeserta, true);
           }
           if (Array.isArray(raw.absensi)) {
             normAbsensi = raw.absensi.map((r: any) => this.normalizeAbsensiRow(r));
@@ -310,13 +310,25 @@ export class GasApiService {
             this.saveLocalShifts(normShifts);
           }
           if (raw.profil && raw.profil.namaLembaga) {
-            this.saveLocalProfil(raw.profil);
+            const normProfil = {
+              ...raw.profil,
+              logo: this.normalizeFotoUrl(raw.profil.logo || raw.profil.Logo || ''),
+            };
+            this.saveLocalProfil(normProfil);
+            raw.profil = normProfil;
           }
 
-          const dbStats = raw.dashboard || this.calculateLocalDashboardStats();
+          const dbStats = { ...(raw.dashboard || this.calculateLocalDashboardStats()) } as DashboardStats;
+          // Backend mengembalikan key kapital ("Nomor Murid") — normalisasi agar cocok dengan renderer.
+          if (Array.isArray((dbStats as any).recentAbsensi)) {
+            dbStats.recentAbsensi = (dbStats as any).recentAbsensi.map((r: any) => this.normalizeAbsensiRow(r));
+          }
+          // Safety: kalau backend tidak menyertakan recent tapi daftar absensi ada, turunkan dari situ.
+          if ((!dbStats.recentAbsensi || dbStats.recentAbsensi.length === 0) && normAbsensi.length > 0) {
+            dbStats.recentAbsensi = normAbsensi.slice(-5).reverse();
+          }
           if (typeof window !== 'undefined') {
             localStorage.setItem('digitalmeera_dashboard_cache', JSON.stringify(dbStats));
-            window.dispatchEvent(new CustomEvent('digitalmeera_synced'));
           }
 
           return {
@@ -396,6 +408,9 @@ export class GasApiService {
         try {
           const res = await this.requestGAS<DashboardStats>('getDashboard', {}, 'POST');
           if (res.success && res.data) {
+            if (Array.isArray((res.data as any).recentAbsensi)) {
+              res.data.recentAbsensi = (res.data as any).recentAbsensi.map((r: any) => this.normalizeAbsensiRow(r));
+            }
             if (typeof window !== 'undefined') {
               localStorage.setItem('digitalmeera_dashboard_cache', JSON.stringify(res.data));
             }
@@ -427,7 +442,7 @@ export class GasApiService {
           if (res.success && Array.isArray(res.data)) {
             // Normalisasi nama kolom dari Sheet (misal "Nomor Murid" -> nomorMurid)
             const normalized: Peserta[] = res.data.map(r => this.normalizePesertaRow(r));
-            this.saveLocalPeserta(normalized);
+            this.saveLocalPeserta(normalized, true);
             return { success: true, data: normalized };
           }
         } catch (err) {
@@ -621,19 +636,14 @@ export class GasApiService {
       try {
         const res = await this.requestGAS('deletePeserta', { id, nomorMurid });
         if (res.success) {
-          const list = this.getLocalPeserta();
-          const idx = list.findIndex(p => p.id === id || p.nomorMurid === nomorMurid);
-          if (idx !== -1) {
-            list[idx].statusPeserta = 'Deleted';
-            list[idx].updatedAt = new Date().toISOString();
-            this.saveLocalPeserta(list);
-          }
+          const list = this.getLocalPeserta().filter(p => p.id !== id && p.nomorMurid !== nomorMurid);
+          this.saveLocalPeserta(list);
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('digitalmeera_synced'));
           }
           return {
             success: true,
-            message: res.message || 'Peserta berhasil dihapus dari Google Spreadsheet.',
+            message: res.message || 'Peserta berhasil dihapus permanen dari Google Spreadsheet.',
           };
         } else {
           return {
@@ -653,10 +663,9 @@ export class GasApiService {
     const list = this.getLocalPeserta();
     const idx = list.findIndex(p => p.id === id || p.nomorMurid === nomorMurid);
     if (idx !== -1) {
-      list[idx].statusPeserta = 'Deleted';
-      list[idx].updatedAt = new Date().toISOString();
+      list.splice(idx, 1);
       this.saveLocalPeserta(list);
-      return { success: true, message: 'Peserta berhasil dihapus (soft delete).' };
+      return { success: true, message: 'Peserta berhasil dihapus permanen.' };
     }
 
     return { success: false, message: 'Peserta tidak ditemukan.' };
@@ -930,6 +939,7 @@ export class GasApiService {
         try {
           const res = await this.requestGAS<ProfilLembaga>('getProfil', {}, 'POST');
           if (res.success && res.data) {
+            res.data = { ...res.data, logo: this.normalizeFotoUrl((res.data as any).logo || (res.data as any).Logo || '') };
             this.saveLocalProfil(res.data);
             return res;
           }
@@ -943,10 +953,18 @@ export class GasApiService {
     return { success: true, data: localProfil };
   }
 
-  async updateProfil(data: Partial<ProfilLembaga>): Promise<ApiResponse> {
+  async updateProfil(data: Partial<ProfilLembaga>): Promise<ApiResponse & { logo?: string }> {
     if (this.isConnectedToGas()) {
       try {
-        return await this.requestGAS('updateProfil', data);
+        const res: any = await this.requestGAS('updateProfil', data);
+        if (res?.success) {
+          // Backend mengembalikan URL kanonis (thumbnail Drive) — pakai itu, bukan base64 lokal.
+          const canonicalLogo = this.normalizeFotoUrl(res.logo || (data as any).logo || '');
+          const profil = { ...this.getLocalProfil(), ...data, logo: canonicalLogo, updatedAt: new Date().toISOString() };
+          this.saveLocalProfil(profil);
+          return { success: true, message: res.message || 'Profil lembaga berhasil diperbarui.', logo: canonicalLogo };
+        }
+        return res;
       } catch (err) {
         console.warn('GAS error on updateProfil');
       }
@@ -1086,22 +1104,29 @@ export class GasApiService {
     return merged;
   }
 
-  public saveLocalPeserta(list: Peserta[]): void {
+  public saveLocalPeserta(list: Peserta[], silent: boolean = false): void {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(LOCAL_PESERTA_KEY, JSON.stringify(list));
         localStorage.setItem('digitalmeera_peserta_list', JSON.stringify(list));
         localStorage.setItem('digitalmeera_last_sync', Date.now().toString());
 
-        if (typeof BroadcastChannel !== 'undefined') {
-          const bc = new BroadcastChannel('digitalmeera_sync');
-          bc.postMessage({ type: 'PESERTA_UPDATED' });
-          bc.close();
+        // Jangan broadcast saat menyimpan hasil BACA (sync/get) — hanya mutasi
+        // (create/update/delete) yang boleh notify, kalau tidak fetch → notify →
+        // fetch berputar tanpa henti.
+        if (!silent) {
+          if (typeof BroadcastChannel !== 'undefined') {
+            const bc = new BroadcastChannel('digitalmeera_sync');
+            bc.postMessage({ type: 'PESERTA_UPDATED' });
+            bc.close();
+          }
         }
       } catch {}
 
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new CustomEvent('peserta_updated'));
+      if (!silent) {
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('peserta_updated'));
+      }
     }
   }
 
@@ -1215,6 +1240,18 @@ export class GasApiService {
   }
 
   // Normalizer Google Spreadsheet column names (Safe from undefined/number type errors)
+  /** Ubah URL Drive /file/d/ID/view menjadi thumbnail yang bisa di-<img>. */
+  private normalizeFotoUrl(raw: any): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return '';
+    if (s.startsWith('data:image')) return s;
+    const fileIdMatch = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch) {
+      return `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w400`;
+    }
+    return s;
+  }
+
   private normalizePesertaRow(r: any): Peserta {
     if (!r || typeof r !== 'object') {
       return {
@@ -1263,7 +1300,7 @@ export class GasApiService {
     return {
       id: String(r.ID ?? r.id ?? `PST${Date.now()}`),
       nomorMurid: nomorMuridStr,
-      foto: String(r.Foto ?? r.foto ?? ''),
+      foto: this.normalizeFotoUrl(r.Foto ?? r.foto ?? ''),
       namaPeserta: String(r['Nama Peserta'] ?? r.namaPeserta ?? r.nama ?? '').trim(),
       tempatLahir: String(r['Tempat Lahir'] ?? r.tempatLahir ?? '').trim(),
       tanggalLahir: String(r['Tanggal Lahir'] ?? r.tanggalLahir ?? '').trim(),

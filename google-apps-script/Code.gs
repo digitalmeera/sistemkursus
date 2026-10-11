@@ -720,16 +720,17 @@ function handleCreatePeserta(params) {
     }
 
     // Upload foto jika berupa base64
+    // Simpan thumbnail URL (bukan /file/d/ view page) agar bisa dibuka di <img>.
     let fotoUrl = "";
     if (params.foto && params.foto.indexOf("data:image") === 0) {
       const uploadRes = saveBase64Image(params.foto, DRIVE_FOLDERS.PESERTA, "foto_mhs_" + Date.now());
       if (uploadRes.success) {
-        fotoUrl = uploadRes.url;
+        fotoUrl = uploadRes.thumbnailUrl || uploadRes.downloadUrl || uploadRes.url;
       } else {
         fotoUrl = ""; // JANGAN simpan raw base64 ke cell agar tidak melebihi 50.000 karakter
       }
     } else if (params.foto && params.foto.indexOf("http") === 0) {
-      fotoUrl = params.foto;
+      fotoUrl = normalizeDriveFotoUrl(params.foto);
     }
 
     // Generate Nomor Murid atomik
@@ -841,8 +842,10 @@ function handleUpdatePeserta(params) {
   if (fotoUrl && fotoUrl.startsWith("data:image")) {
     const uploadRes = saveBase64Image(fotoUrl, DRIVE_FOLDERS.PESERTA, "foto_mhs_" + oldNomorMurid + "_" + Date.now());
     if (uploadRes.success) {
-      fotoUrl = uploadRes.url;
+      fotoUrl = uploadRes.thumbnailUrl || uploadRes.downloadUrl || uploadRes.url;
     }
+  } else if (fotoUrl && fotoUrl.indexOf("http") === 0) {
+    fotoUrl = normalizeDriveFotoUrl(fotoUrl);
   }
 
   let harga = oldRow[13];
@@ -911,13 +914,13 @@ function handleDeletePeserta(params) {
     return { success: false, message: "Peserta tidak ditemukan." };
   }
 
-  // Soft Delete: Ubah Status Peserta menjadi "Deleted" agar sequence penomoran aman & histori utuh
-  const now = new Date().toISOString();
-  sheet.getRange(targetRowIdx, 18).setValue("Deleted");
-  sheet.getRange(targetRowIdx, 20).setValue(now);
+  // Hapus permanen (hard delete): baris benar-benar dihapus dari Spreadsheet.
+  // Aman untuk penomoran karena getNextStudentNumber memakai counter monoton
+  // (next_student_seq) yang tidak pernah turun + double-check max yang ada.
+  sheet.deleteRow(targetRowIdx);
   clearSyncCache();
 
-  return { success: true, message: "Peserta berhasil dihapus (soft delete)." };
+  return { success: true, message: "Peserta berhasil dihapus permanen dari Spreadsheet." };
 }
 
 // ============================================================================
@@ -1343,7 +1346,9 @@ function handleUpdateProfil(params) {
   let logoUrl = params.logo || "";
   if (logoUrl && logoUrl.startsWith("data:image")) {
     const uploadRes = saveBase64Image(logoUrl, DRIVE_FOLDERS.LOGO, "logo_digitalmeera_" + Date.now());
-    if (uploadRes.success) logoUrl = uploadRes.url;
+    if (uploadRes.success) logoUrl = uploadRes.thumbnailUrl || uploadRes.downloadUrl || uploadRes.url;
+  } else if (logoUrl && logoUrl.indexOf("http") === 0) {
+    logoUrl = normalizeDriveFotoUrl(logoUrl);
   }
 
   const now = new Date().toISOString();
@@ -1484,19 +1489,45 @@ function saveBase64Image(base64Data, targetFolderName, fileName) {
       Logger.log("Peringatan sharing: " + sharingErr.message);
     }
 
-    // URL view Google Drive
+    // URL view Google Drive — simpan thumbnail agar langsung bisa dibuka di <img>
     const fileUrl = file.getUrl();
+    const fileId = file.getId();
 
     return {
       success: true,
-      fileId: file.getId(),
+      fileId: fileId,
       url: fileUrl,
-      downloadUrl: "https://drive.google.com/uc?export=view&id=" + file.getId()
+      downloadUrl: "https://drive.google.com/uc?export=view&id=" + fileId,
+      thumbnailUrl: "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w600"
     };
   } catch (err) {
     Logger.log("Gagal menyimpan file ke Drive: " + err.message);
     return { success: false, message: err.message };
   }
+}
+
+/**
+ * Normalisasi URL foto Drive lama (/file/d/ID/view) menjadi thumbnail yang embeddable.
+ * Dipakai saat baca maupun tulis agar foto lama otomatis bisa dibuka tanpa re-upload.
+ */
+function normalizeDriveFotoUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== "string") return rawUrl;
+  const s = rawUrl.trim();
+  if (!s || s.indexOf("data:image") === 0) return s;
+  // Sudah thumbnail / uc export — biarkan
+  if (s.indexOf("drive.google.com/thumbnail") !== -1) return s;
+  if (s.indexOf("drive.google.com/uc") !== -1) return s;
+  // Pola /file/d/FILE_ID/...
+  let m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m && m[1]) {
+    return "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w600";
+  }
+  // Pola ?id=FILE_ID
+  m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m && m[1]) {
+    return "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w600";
+  }
+  return s;
 }
 
 // ============================================================================
@@ -1577,6 +1608,10 @@ function handleSyncAll(params) {
 
   if (pesertaSheet) {
     const pRows = getSheetRowsAsObjects(pesertaSheet);
+    // Normalisasi foto lama agar langsung bisa dibuka di <img>
+    pRows.forEach(function (p) {
+      if (p["Foto"]) p["Foto"] = normalizeDriveFotoUrl(p["Foto"]);
+    });
     peserta = pRows.filter(p => p["Status Peserta"] !== "Deleted");
     totalPeserta = peserta.length;
     peserta.forEach(p => {
@@ -1631,7 +1666,7 @@ function handleSyncAll(params) {
         nomorWA: prRows[0]["Nomor WA"] || "",
         email: prRows[0].Email || "",
         website: prRows[0].Website || "https://www.digitalmeera.tech",
-        logo: prRows[0].Logo || "",
+        logo: normalizeDriveFotoUrl(prRows[0].Logo || ""),
         footer: prRows[0].Footer || "© 2026 DIGITALMEERA. Hak Cipta Dilindungi."
       };
     }

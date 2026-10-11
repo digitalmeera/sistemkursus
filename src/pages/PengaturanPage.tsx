@@ -3,24 +3,23 @@ import { ProfilLembaga, Shift, CardTemplateConfig, AdminUser } from '../types';
 import { gasApi } from '../services/gasApi';
 import { Modal } from '../components/Modal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { 
-  User, 
-  Building2, 
-  Clock, 
-  CreditCard, 
-  FileText, 
-  Upload, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  CheckCircle2, 
-  AlertCircle, 
-  Link2, 
-  Save, 
+import { PageHeader, Card, Toast, EmptyState, StatusBadge } from '../components/ui';
+import {
+  User,
+  Building2,
+  Clock,
+  CreditCard,
+  Upload,
+  Plus,
+  Edit3,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  Link2,
+  Save,
   RefreshCw,
   Code2,
   Image as ImageIcon,
-  Sparkles,
   QrCode as QrCodeIcon,
   ExternalLink
 } from 'lucide-react';
@@ -157,10 +156,15 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
         website,
         footer,
       };
-      const res = await gasApi.updateProfil(updated);
+      const res: any = await gasApi.updateProfil(updated);
       if (res.success) {
-        onProfilUpdated(updated);
+        // Pakai URL kanonis dari server (thumbnail Drive) agar tidak menumpuk file & langsung tampil.
+        const canonical = { ...updated, logo: res.logo || logo };
+        setLogo(canonical.logo);
+        onProfilUpdated(canonical);
         showToast('Identitas lembaga berhasil diperbarui.');
+      } else {
+        showToast(res.message || 'Gagal menyimpan identitas lembaga.');
       }
     } catch (err) {
       console.error(err);
@@ -340,124 +344,69 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-xs sm:text-sm font-semibold text-white shadow-xl animate-in slide-in-from-bottom-5">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+  void onOpenGasModal;
 
-      {/* Header */}
-      <div>
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-          Pengaturan Sistem
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Konfigurasi akun administrator, identitas lembaga, jam shift presensi, template kartu, dan API backend.
-        </p>
-      </div>
+  const tabs = [
+    { key: 'admin', label: 'Profil Admin', icon: <User className="h-4 w-4" /> },
+    { key: 'lembaga', label: 'Identitas Lembaga', icon: <Building2 className="h-4 w-4" /> },
+    { key: 'shift', label: 'Jam Presensi & Shift', icon: <Clock className="h-4 w-4" /> },
+    { key: 'kartu', label: 'Template Kartu', icon: <CreditCard className="h-4 w-4" /> },
+    { key: 'backend', label: 'Koneksi Google Spreadsheet', icon: <Link2 className="h-4 w-4" /> },
+  ] as const;
+
+  return (
+    <div className="space-y-4">
+      <Toast message={toastMessage} />
+      <PageHeader
+        title="Pengaturan Sistem"
+        description="Konfigurasi akun administrator, identitas lembaga, jam shift presensi, template kartu, dan API backend."
+      />
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-slate-200 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setActiveTab('admin')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
-            activeTab === 'admin'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <User className="h-4 w-4" />
-          <span>Profil Admin</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('lembaga')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
-            activeTab === 'lembaga'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Building2 className="h-4 w-4" />
-          <span>Identitas Lembaga</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('shift')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
-            activeTab === 'shift'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Clock className="h-4 w-4" />
-          <span>Jam Presensi & Shift</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('kartu')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
-            activeTab === 'kartu'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <CreditCard className="h-4 w-4" />
-          <span>Template Kartu</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('backend')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
-            activeTab === 'backend'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Link2 className="h-4 w-4" />
-          <span>Koneksi Google Spreadsheet</span>
-        </button>
-      </div>
+      <Card className="p-2">
+        <div className="flex flex-wrap gap-1.5">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[13px] font-semibold ${
+                activeTab === t.key
+                  ? 'border-[#0f4c73] bg-[#0f4c73] text-white'
+                  : 'border-transparent text-[#4b5a6a] hover:bg-[#f0f3f6]'
+              }`}
+            >
+              {t.icon}
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </Card>
 
       {/* TAB A: PROFIL ADMIN */}
       {activeTab === 'admin' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs max-w-2xl">
-          <h3 className="text-sm font-bold text-slate-900 mb-1">
+        <Card className="max-w-2xl p-4">
+          <h3 className="text-[13px] font-semibold text-[#1a2430]">
             Akun & Keamanan Administrator
           </h3>
-          <p className="text-xs text-slate-500 mb-5">
+          <p className="mt-0.5 text-[13px] text-[#4b5a6a]">
             Ganti username atau password administrator untuk menjaga keamanan sistem.
           </p>
 
           {adminMsg && (
-            <div
-              className={`mb-5 flex items-start gap-2.5 rounded-xl p-3 text-xs ${
-                adminMsg.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}
-            >
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-[#e3e9ef] bg-[#f7f9fb] p-3 text-[13px]">
               {adminMsg.type === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0f4c73]" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#a02a2a]" />
               )}
-              <p className="font-medium">{adminMsg.text}</p>
+              <p className="font-medium text-[#1a2430]">{adminMsg.text}</p>
             </div>
           )}
 
-          <form onSubmit={handleSaveAdmin} className="space-y-4">
+          <form onSubmit={handleSaveAdmin} className="mt-4 space-y-3">
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Username Admin
               </label>
               <input
@@ -465,12 +414,12 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                 value={adminUsername}
                 onChange={(e) => setAdminUsername(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Nama Lengkap Administrator
               </label>
               <input
@@ -478,90 +427,92 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                 value={adminNama}
                 onChange={(e) => setAdminNama(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input"
               />
             </div>
 
-            <div className="pt-3 border-t border-slate-100">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-                Ubah Password (Kosongkan jika tidak ingin mengganti)
+            <div className="border-t border-[#e3e9ef] pt-3">
+              <h4 className="text-[13px] font-semibold text-[#1a2430]">
+                Ubah Password
               </h4>
+              <p className="mt-0.5 text-[12px] text-[#8494a5]">
+                Kosongkan jika tidak ingin mengganti password.
+              </p>
 
-              <div className="space-y-3">
+              <div className="mt-3 space-y-3">
                 <div>
-                  <label className="text-xs text-slate-600 block mb-1">Password Saat Ini</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">Password Saat Ini</label>
                   <input
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Masukkan password saat ini jika ganti password..."
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    className="dm-input"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-600 block mb-1">Password Baru</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">Password Baru</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Minimal 6 karakter..."
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    className="dm-input"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-600 block mb-1">Konfirmasi Password Baru</label>
+                  <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">Konfirmasi Password Baru</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Ulangi password baru..."
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    className="dm-input"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-1">
               <button
                 type="submit"
                 disabled={adminSaving}
-                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-sky-700 transition-colors disabled:opacity-50"
+                className="dm-btn-primary"
               >
                 <Save className="h-4 w-4" />
                 <span>{adminSaving ? 'Menyimpan...' : 'Simpan Profil Admin'}</span>
               </button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* TAB B: IDENTITAS LEMBAGA */}
       {activeTab === 'lembaga' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs max-w-2xl">
-          <h3 className="text-sm font-bold text-slate-900 mb-1">
+        <Card className="max-w-2xl p-4">
+          <h3 className="text-[13px] font-semibold text-[#1a2430]">
             Identitas Lembaga Digitalmeera
           </h3>
-          <p className="text-xs text-slate-500 mb-5">
+          <p className="mt-0.5 text-[13px] text-[#4b5a6a]">
             Nama lembaga dan logo ini akan ditampilkan pada kop laporan, kartu peserta, login, dan header.
           </p>
 
-          <form onSubmit={handleSaveLembaga} className="space-y-4">
-            {/* Logo Upload */}
+          <form onSubmit={handleSaveLembaga} className="mt-4 space-y-3">
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Logo Digitalmeera
               </label>
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+              <div className="flex items-center gap-3">
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-lg border border-[#e3e9ef] bg-[#f7f9fb]">
                   {logo ? (
-                    <img src={logo} alt="Logo" className="h-full w-full object-contain" />
+                    <img src={logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} className="h-full w-full object-contain" />
                   ) : (
-                    <span className="font-bold text-sm text-slate-400">DM</span>
+                    <span className="text-[13px] font-semibold text-[#8494a5]">DM</span>
                   )}
                 </div>
-                <label className="cursor-pointer rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs">
+                <label className="dm-btn-secondary cursor-pointer !py-2">
                   Ganti Logo
                   <input type="file" accept="image/*" onChange={handleUploadLogo} className="hidden" />
                 </label>
@@ -569,7 +520,7 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                   <button
                     type="button"
                     onClick={() => setLogo('')}
-                    className="text-xs text-red-600 hover:underline"
+                    className="rounded-md p-1.5 text-[13px] font-medium text-[#a02a2a] hover:bg-[#fdf0f0]"
                   >
                     Hapus Logo
                   </button>
@@ -578,7 +529,7 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Nama Lembaga
               </label>
               <input
@@ -586,256 +537,265 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                 value={namaLembaga}
                 onChange={(e) => setNamaLembaga(e.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Alamat Lembaga
               </label>
               <textarea
                 rows={2}
                 value={alamat}
                 onChange={(e) => setAlamat(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                   Nomor WhatsApp
                 </label>
                 <input
                   type="text"
                   value={nomorWA}
                   onChange={(e) => setNomorWA(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  className="dm-input"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+                <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                   Email
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  className="dm-input"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Website
               </label>
               <input
                 type="text"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Teks Footer Website
               </label>
               <input
                 type="text"
                 value={footer}
                 onChange={(e) => setFooter(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input"
               />
             </div>
 
-            <div className="pt-3">
+            <div className="pt-1">
               <button
                 type="submit"
                 disabled={lembagaSaving}
-                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-sky-700 transition-colors disabled:opacity-50"
+                className="dm-btn-primary"
               >
                 <Save className="h-4 w-4" />
                 <span>{lembagaSaving ? 'Menyimpan...' : 'Simpan Identitas Lembaga'}</span>
               </button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* TAB C: JAM PRESENSI & SHIFT */}
       {activeTab === 'shift' && (
-        <div className="space-y-4 max-w-3xl">
-          <div className="flex items-center justify-between">
+        <div className="max-w-3xl space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">
+              <h3 className="text-[13px] font-semibold text-[#1a2430]">
                 Pengaturan Jam Batas Presensi & Shift
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="mt-0.5 text-[13px] text-[#4b5a6a]">
                 Barcode yang discan akan otomatis mencocokkan jadwal shift yang berlaku.
               </p>
             </div>
-
             <button
               type="button"
               onClick={handleOpenAddShift}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-sky-700"
+              className="dm-btn-primary shrink-0 !py-2"
             >
               <Plus className="h-4 w-4" />
               <span>Tambah Shift</span>
             </button>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
-                <tr>
-                  <th className="px-4 py-3">ID Shift</th>
-                  <th className="px-4 py-3">Nama Shift</th>
-                  <th className="px-4 py-3">Jam Mulai</th>
-                  <th className="px-4 py-3">Jam Selesai</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {shifts.map((s) => (
-                  <tr key={s.idShift} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 font-mono font-bold text-slate-500">{s.idShift}</td>
-                    <td className="px-4 py-3 font-semibold text-slate-900">{s.namaShift}</td>
-                    <td className="px-4 py-3 font-mono font-semibold text-sky-700">{s.jamMulai}</td>
-                    <td className="px-4 py-3 font-mono font-semibold text-sky-700">{s.jamSelesai}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          s.status === 'Aktif'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        {s.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditShift(s)}
-                          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-600"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShiftToDelete(s)}
-                          className="rounded-lg p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Card>
+            {shifts.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="dm-table w-full">
+                  <thead>
+                    <tr>
+                      <th>ID Shift</th>
+                      <th>Nama Shift</th>
+                      <th>Jam Mulai</th>
+                      <th>Jam Selesai</th>
+                      <th>Status</th>
+                      <th className="!text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shifts.map((s) => (
+                      <tr key={s.idShift}>
+                        <td className="whitespace-nowrap font-mono text-[#4b5a6a]">{s.idShift}</td>
+                        <td className="whitespace-nowrap font-semibold text-[#1a2430]">{s.namaShift}</td>
+                        <td className="whitespace-nowrap font-mono font-semibold text-[#0f4c73]">{s.jamMulai}</td>
+                        <td className="whitespace-nowrap font-mono font-semibold text-[#0f4c73]">{s.jamSelesai}</td>
+                        <td>
+                          <StatusBadge value={s.status} />
+                        </td>
+                        <td>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditShift(s)}
+                              className="rounded-md p-1.5 text-[#4b5a6a] hover:bg-[#f0f3f6]"
+                              title="Ubah"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShiftToDelete(s)}
+                              className="rounded-md p-1.5 text-[#4b5a6a] hover:bg-[#fdf0f0] hover:text-[#a02a2a]"
+                              title="Hapus"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<Clock className="h-5 w-5" />}
+                title="Belum ada shift"
+                description="Tambahkan shift pertama untuk mengatur jam presensi."
+                action={
+                  <button type="button" onClick={handleOpenAddShift} className="dm-btn-primary !py-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Tambah shift</span>
+                  </button>
+                }
+              />
+            )}
+          </Card>
         </div>
       )}
 
       {/* TAB D: TEMPLATE KARTU PESERTA */}
       {activeTab === 'kartu' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs max-w-4xl space-y-6">
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-slate-900">
+        <div className="max-w-4xl space-y-4">
+          <Card className="p-4">
+            <h3 className="text-[13px] font-semibold text-[#1a2430]">
               Pengaturan & Upload Template Kartu Peserta
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="mt-0.5 text-[13px] text-[#4b5a6a]">
               Kustomisasi desain kartu peserta dengan mengunggah gambar latar template kustom (JPG/PNG) atau menggunakan preset tema warna resmi.
             </p>
-          </div>
+          </Card>
 
           {/* Mode Pemilihan Desain */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+          <Card className="p-4">
+            <h3 className="text-[13px] font-semibold text-[#1a2430]">
               Pilihan Mode Desain Latar Kartu
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-                cardConfig.useCustomTemplate 
-                  ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20' 
-                  : 'border-slate-200 bg-white hover:bg-slate-50'
+            </h3>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
+                cardConfig.useCustomTemplate
+                  ? 'border-[#0f4c73] bg-[#eef5fb]'
+                  : 'border-[#e3e9ef] bg-white'
               }`}>
                 <input
                   type="radio"
                   name="cardTemplateMode"
                   checked={!!cardConfig.useCustomTemplate}
                   onChange={() => setCardConfig({ ...cardConfig, useCustomTemplate: true })}
-                  className="mt-0.5 text-sky-600 focus:ring-sky-500"
+                  className="mt-0.5 accent-[#0f4c73]"
                 />
                 <div>
-                  <span className="text-xs font-bold text-slate-900 block">
+                  <span className="block text-[13px] font-semibold text-[#1a2430]">
                     Gunakan Gambar Template Kustom (JPG / PNG)
                   </span>
-                  <span className="text-[11px] text-slate-500 leading-relaxed block mt-0.5">
+                  <span className="mt-0.5 block text-[12px] leading-relaxed text-[#4b5a6a]">
                     Unggah gambar desain template buatan Anda sendiri (misal dari Canva/Photoshop).
                   </span>
                 </div>
               </label>
 
-              <label className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-                !cardConfig.useCustomTemplate 
-                  ? 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20' 
-                  : 'border-slate-200 bg-white hover:bg-slate-50'
+              <label className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
+                !cardConfig.useCustomTemplate
+                  ? 'border-[#0f4c73] bg-[#eef5fb]'
+                  : 'border-[#e3e9ef] bg-white'
               }`}>
                 <input
                   type="radio"
                   name="cardTemplateMode"
                   checked={!cardConfig.useCustomTemplate}
                   onChange={() => setCardConfig({ ...cardConfig, useCustomTemplate: false })}
-                  className="mt-0.5 text-sky-600 focus:ring-sky-500"
+                  className="mt-0.5 accent-[#0f4c73]"
                 />
                 <div>
-                  <span className="text-xs font-bold text-slate-900 block">
+                  <span className="block text-[13px] font-semibold text-[#1a2430]">
                     Gunakan Preset Tema Warna Sistem
                   </span>
-                  <span className="text-[11px] text-slate-500 leading-relaxed block mt-0.5">
+                  <span className="mt-0.5 block text-[12px] leading-relaxed text-[#4b5a6a]">
                     Gunakan desain modern bawaan dengan palet warna resmi Digitalmeera.
                   </span>
                 </div>
               </label>
             </div>
-          </div>
+          </Card>
 
           {/* Area Upload Gambar Template Kartu (JPG / PNG) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+          <Card className="p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-[13px] font-semibold text-[#1a2430]">
                 Unggah File Template Kartu (JPG / PNG)
-              </label>
-              <span className="text-[11px] text-slate-500">
+              </h3>
+              <span className="text-[12px] text-[#8494a5]">
                 Rasio ID-1: 85,60 mm &times; 53,98 mm (~1012 &times; 638 px)
               </span>
             </div>
 
             {cardConfig.templateImage ? (
-              <div className="space-y-3">
-                <div className="relative aspect-[85.6/53.98] w-full max-w-md overflow-hidden rounded-2xl border-2 border-sky-400 shadow-md">
+              <div className="mt-3 space-y-3">
+                <div className="relative aspect-[85.6/53.98] w-full max-w-md overflow-hidden rounded-lg border border-[#e3e9ef]">
                   <img
                     src={cardConfig.templateImage}
                     alt="Template Kartu"
                     className="h-full w-full object-cover"
                   />
-                  <div className="absolute top-2 right-2 rounded-md bg-black/60 backdrop-blur-xs px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                  <div className="absolute right-2 top-2 rounded-md bg-[#1a2430] px-2 py-0.5 text-[10px] font-semibold text-white">
                     Template Aktif
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50">
-                    <Upload className="h-3.5 w-3.5 text-sky-600" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="dm-btn-secondary cursor-pointer !py-2">
+                    <Upload className="h-3.5 w-3.5" />
                     <span>{templateUploading ? 'Memproses...' : 'Ganti Gambar Template'}</span>
                     <input
                       type="file"
@@ -856,7 +816,7 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                       });
                       showToast('Template gambar kustom dihapus.');
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-100"
+                    className="dm-btn-secondary !border-[#e3e9ef] !py-2 hover:!bg-[#fdf0f0] hover:!text-[#a02a2a]"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     <span>Hapus Template Kustom</span>
@@ -864,14 +824,14 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                 </div>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center hover:bg-slate-50 cursor-pointer transition-colors max-w-xl">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 mb-3 shadow-2xs">
-                  <ImageIcon className="h-6 w-6" />
+              <label className="mt-3 flex max-w-xl cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-[#e3e9ef] bg-[#f7f9fb] p-6 text-center">
+                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-[#eef5fb] text-[#0f4c73]">
+                  <ImageIcon className="h-5 w-5" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold text-slate-800">
+                <span className="text-[13px] font-semibold text-[#1a2430]">
                   {templateUploading ? 'Memproses gambar...' : 'Klik untuk Unggah Gambar Template Kartu'}
                 </span>
-                <span className="text-[11px] text-slate-500 mt-1 max-w-sm">
+                <span className="mt-1 max-w-sm text-[12px] text-[#4b5a6a]">
                   Format gambar yang didukung: <strong>JPG, JPEG, PNG</strong> (Maksimal 8 MB). Disarankan rasio standar kartu 1.586 : 1.
                 </span>
                 <input
@@ -883,23 +843,23 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                 />
               </label>
             )}
-          </div>
+          </Card>
 
           {/* Pengaturan Tambahan: Preset Tema (Bila tidak menggunakan template kustom) */}
-          <div className="border-t border-slate-200 pt-5 space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <Card className="p-4">
+            <h3 className="text-[13px] font-semibold text-[#1a2430]">
               Pilihan Tema Warna (Mode Standar / Fallback)
-            </h4>
+            </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">
+                <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                   Pilih Palet Tema Kartu
                 </label>
                 <select
                   value={cardConfig.theme}
                   onChange={(e) => setCardConfig({ ...cardConfig, theme: e.target.value as any })}
-                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-sky-500"
+                  className="dm-input"
                 >
                   <option value="modern-navy">Modern Navy (Slate & Sky Blue)</option>
                   <option value="emerald-green">Emerald Green (Deep Green & Mint)</option>
@@ -909,138 +869,135 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">
+                <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                   Format Kode Siswa Pada Kartu
                 </label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                  <QrCodeIcon className="h-4 w-4 text-sky-600 shrink-0" />
+                <div className="flex items-center gap-2 rounded-lg border border-[#e3e9ef] bg-[#f7f9fb] px-3 py-2 text-[13px] text-[#1a2430]">
+                  <QrCodeIcon className="h-4 w-4 shrink-0 text-[#0f4c73]" />
                   <span className="font-medium">QR Code 1:1 di sisi kanan kartu (Aktif)</span>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Pratinjau Langsung (Live Preview) Kartu Siswa */}
-          <div className="border-t border-slate-200 pt-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                <span>Pratinjau Hasil Kartu (Live Preview)</span>
-              </span>
-              <span className="text-[11px] text-slate-400">
+          <Card className="p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-[13px] font-semibold text-[#1a2430]">
+                Pratinjau Hasil Kartu (Live Preview)
+              </h3>
+              <span className="text-[12px] text-[#8494a5]">
                 Ukuran 85,60 mm &times; 53,98 mm &bull; QR Code 1:1 &bull; Tanpa Harga
               </span>
             </div>
 
-            <div className="max-w-md">
+            <div className="mt-3 max-w-md">
               <div
-                className={`relative w-full aspect-[85.6/53.98] overflow-hidden rounded-2xl ${
-                  cardConfig.useCustomTemplate && cardConfig.templateImage
-                    ? 'bg-slate-900'
-                    : cardConfig.theme === 'emerald-green'
-                    ? 'bg-gradient-to-br from-emerald-950 to-teal-900'
+                className={`relative flex aspect-[85.6/53.98] w-full flex-col justify-between overflow-hidden rounded-lg ${
+                  cardConfig.theme === 'emerald-green'
+                    ? 'bg-[#0e4a38]'
                     : cardConfig.theme === 'royal-indigo'
-                    ? 'bg-gradient-to-br from-indigo-950 to-slate-900'
+                    ? 'bg-[#2c3263]'
                     : cardConfig.theme === 'crimson-amber'
-                    ? 'bg-gradient-to-br from-red-950 to-slate-900'
-                    : 'bg-gradient-to-br from-slate-900 to-slate-800'
-                } p-3 text-white shadow-lg flex flex-col justify-between`}
+                    ? 'bg-[#5c1f1f]'
+                    : 'bg-[#0f4c73]'
+                } p-3 text-white`}
               >
                 {/* Background Kustom jika aktif */}
                 {cardConfig.useCustomTemplate && cardConfig.templateImage && (
                   <img
                     src={cardConfig.templateImage}
                     alt="Background Template"
-                    className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+                    className="pointer-events-none absolute inset-0 h-full w-full object-cover"
                   />
                 )}
 
-                <div className="relative z-10 flex flex-col justify-between h-full">
+                <div className="relative z-10 flex h-full flex-col justify-between">
                   {/* Header */}
-                  <div className="flex items-center justify-between border-b border-white/10 pb-1 pt-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/20 text-[9px] font-black">
+                  <div className="flex items-center justify-between border-b border-white/20 pb-1 pt-0.5">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/20 text-[9px] font-semibold">
                         DM
                       </div>
                       <div>
-                        <h4 className="text-[11px] font-bold tracking-wider leading-none text-white truncate">
+                        <h4 className="truncate text-[11px] font-semibold leading-none tracking-wide text-white">
                           {profil.namaLembaga || 'DIGITALMEERA'}
                         </h4>
-                        <span className="text-[7px] text-slate-300 uppercase tracking-widest font-medium">
+                        <span className="text-[7px] font-medium uppercase tracking-widest text-white/70">
                           Kartu Peserta Resmi
                         </span>
                       </div>
                     </div>
-                    <span className="text-[8px] font-bold uppercase tracking-wider bg-white/15 px-1.5 py-0.5 rounded text-white/90">
+                    <span className="rounded bg-white/15 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-white/90">
                       OFFICIAL
                     </span>
                   </div>
 
                   {/* Body Layout: Foto (Kiri) | Info (Tengah) | QR Code (Kanan 1:1) */}
-                  <div className="flex items-center gap-2.5 my-auto">
-                    <div className="h-16 w-13 shrink-0 overflow-hidden rounded-lg border-2 border-white/40 bg-slate-800 shadow-sm flex items-center justify-center">
-                      <span className="font-bold text-xs text-white/70">FOTO</span>
+                  <div className="my-auto flex items-center gap-2.5">
+                    <div className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/30 bg-white/10">
+                      <span className="text-xs font-semibold text-white/70">FOTO</span>
                     </div>
 
-                    <div className="flex-1 min-w-0 pr-1">
-                      <p className="text-[11px] font-bold text-white truncate leading-snug drop-shadow-sm">
+                    <div className="min-w-0 flex-1 pr-1">
+                      <p className="truncate text-[11px] font-semibold leading-snug text-white">
                         Ahmad Fauzi Pratama
                       </p>
                       <div className="mt-0.5 inline-block">
-                        <span className="font-mono text-[8.5px] font-bold px-1.5 py-0.5 rounded bg-sky-500 text-white shadow-xs">
+                        <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[8.5px] font-semibold text-[#0f4c73]">
                           DM0001
                         </span>
                       </div>
                       <div className="mt-1">
-                        <p className="text-[6.5px] text-slate-300 uppercase tracking-wider font-semibold">
+                        <p className="text-[6.5px] font-semibold uppercase tracking-wider text-white/70">
                           Program Kelas:
                         </p>
-                        <p className="text-[8.5px] text-white font-medium truncate">
+                        <p className="truncate text-[8.5px] font-medium text-white">
                           Microsoft Office Pemula
                         </p>
                       </div>
                       <div className="mt-1">
-                        <span className="inline-block text-[7px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                        <span className="inline-block rounded border border-white/30 bg-white/10 px-1.5 py-0.5 text-[7px] font-semibold text-white">
                           Aktif
                         </span>
                       </div>
                     </div>
 
                     {/* QR Code di Sebelah Kanan (Rasio 1:1) */}
-                    <div className="shrink-0 flex flex-col items-center justify-center rounded-xl bg-white p-1 shadow-md border border-slate-200">
+                    <div className="flex shrink-0 flex-col items-center justify-center rounded-lg border border-[#e3e9ef] bg-white p-1">
                       {sampleQrUrl ? (
                         <img
                           src={sampleQrUrl}
                           alt="Contoh QR Code"
-                          className="h-12 w-12 aspect-square object-contain"
+                          className="aspect-square h-12 w-12 object-contain"
                         />
                       ) : (
-                        <div className="h-12 w-12 aspect-square bg-slate-100 flex items-center justify-center">
-                          <QrCodeIcon className="h-6 w-6 text-slate-400" />
+                        <div className="flex aspect-square h-12 w-12 items-center justify-center bg-[#f7f9fb]">
+                          <QrCodeIcon className="h-6 w-6 text-[#8494a5]" />
                         </div>
                       )}
-                      <span className="text-[6.5px] font-mono font-bold text-slate-700 tracking-wider mt-0.5">
+                      <span className="mt-0.5 font-mono text-[6.5px] font-semibold tracking-wider text-[#4b5a6a]">
                         SCAN QR
                       </span>
                     </div>
                   </div>
 
-                  <div className="text-center pt-0.5">
-                    <span className="text-[6px] text-slate-300 tracking-wider">
+                  <div className="pt-0.5 text-center">
+                    <span className="text-[6px] tracking-wider text-white/70">
                       {profil.website || 'digitalmeera.com'}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Tombol Simpan */}
-          <div className="pt-2">
+          <div>
             <button
               type="button"
               onClick={handleSaveCardConfig}
-              className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-6 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-sky-700 transition-colors"
+              className="dm-btn-primary"
             >
               <Save className="h-4 w-4" />
               <span>Simpan Pengaturan Kartu</span>
@@ -1051,130 +1008,135 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
 
       {/* TAB E: BACKEND SPREADSHEET URL */}
       {activeTab === 'backend' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs max-w-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Koneksi Google Spreadsheet & Apps Script
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Pusat data real-time menggunakan Google Spreadsheet & Google Drive.
-              </p>
+        <div className="max-w-2xl space-y-4">
+          <Card className="p-4">
+            <div className="flex flex-col gap-3 border-b border-[#e3e9ef] pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-[13px] font-semibold text-[#1a2430]">
+                  Koneksi Google Spreadsheet & Apps Script
+                </h3>
+                <p className="mt-0.5 text-[13px] text-[#4b5a6a]">
+                  Pusat data real-time menggunakan Google Spreadsheet & Google Drive.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {gasApi.isConnectedToGas() ? (
+                  <span className="dm-badge dm-badge-active">
+                    <span className="mr-1.5 h-2 w-2 rounded-full bg-current" />
+                    Terhubung ke Google Cloud
+                  </span>
+                ) : (
+                  <span className="dm-badge dm-badge-muted">
+                    <span className="mr-1.5 h-2 w-2 rounded-full bg-current" />
+                    Mode Offline
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                gasApi.isConnectedToGas()
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
-              }`}>
-                <span className={`h-2 w-2 rounded-full ${gasApi.isConnectedToGas() ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                {gasApi.isConnectedToGas() ? 'Terhubung ke Google Cloud' : 'Mode Offline'}
-              </span>
-            </div>
-          </div>
 
-          {/* Form Input URL GAS */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Google Apps Script Web App URL
-              </label>
+            {/* Form Input URL GAS */}
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[12px] font-semibold text-[#1a2430]">
+                  Google Apps Script Web App URL
+                </label>
+                <button
+                  type="button"
+                  onClick={handleResetGasUrl}
+                  className="rounded-md p-1 text-[12px] font-semibold text-[#0f4c73] hover:bg-[#eef5fb]"
+                >
+                  Reset ke URL Resmi
+                </button>
+              </div>
+              <input
+                type="text"
+                value={gasUrl}
+                onChange={(e) => setGasUrl(e.target.value)}
+                placeholder="https://script.google.com/macros/s/AKfyc.../exec"
+                className="dm-input font-mono !text-[12px]"
+              />
+            </div>
+
+            {/* Tombol Aksi URL */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={handleResetGasUrl}
-                className="text-[11px] font-semibold text-sky-600 hover:text-sky-700 hover:underline"
+                onClick={handleSaveGasUrl}
+                disabled={testingGas}
+                className="dm-btn-primary !py-2"
               >
-                Reset ke URL Resmi
+                <Save className="h-4 w-4" />
+                <span>Simpan URL</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTestGas}
+                disabled={testingGas}
+                className="dm-btn-secondary !py-2"
+              >
+                {testingGas ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                <span>{testingGas ? 'Menguji Koneksi...' : 'Uji Koneksi'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSyncNow}
+                disabled={syncingNow}
+                className="dm-btn-secondary !py-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncingNow ? 'animate-spin' : ''}`} />
+                <span>{syncingNow ? 'Menyinkronkan...' : 'Segarkan Data Sekarang'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenCodeModal}
+                className="dm-btn-secondary !py-2"
+              >
+                <Code2 className="h-4 w-4" />
+                <span>Lihat Source Code.gs</span>
               </button>
             </div>
-            <input
-              type="text"
-              value={gasUrl}
-              onChange={(e) => setGasUrl(e.target.value)}
-              placeholder="https://script.google.com/macros/s/AKfyc.../exec"
-              className="w-full rounded-xl border border-slate-300 font-mono text-xs px-3.5 py-2.5 text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-            />
-          </div>
-
-          {/* Tombol Aksi URL */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={handleSaveGasUrl}
-              disabled={testingGas}
-              className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-2xs hover:bg-sky-700 transition-colors disabled:opacity-50"
-            >
-              <Save className="h-4 w-4" />
-              <span>Simpan URL</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleTestGas}
-              disabled={testingGas}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              {testingGas ? <RefreshCw className="h-4 w-4 animate-spin text-sky-600" /> : <Link2 className="h-4 w-4 text-slate-500" />}
-              <span>{testingGas ? 'Menguji Koneksi...' : 'Uji Koneksi'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSyncNow}
-              disabled={syncingNow}
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-xs sm:text-sm font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncingNow ? 'animate-spin text-emerald-600' : 'text-emerald-700'}`} />
-              <span>{syncingNow ? 'Menyinkronkan...' : 'Segarkan Data Sekarang'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onOpenCodeModal}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <Code2 className="h-4 w-4 text-indigo-600" />
-              <span>Lihat Source Code.gs</span>
-            </button>
-          </div>
+          </Card>
 
           {/* Cloud Info Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Card className="p-4">
+              <h3 className="text-[12px] font-semibold uppercase tracking-wide text-[#4b5a6a]">
                 Google Spreadsheet Database
-              </span>
-              <p className="font-mono text-xs text-slate-800 font-semibold break-all">
+              </h3>
+              <p className="mt-1.5 break-all font-mono text-[12px] font-semibold text-[#0f4c73]">
                 18d2NpE-Y4cm19LjNWo7UPZdMPdcv8CQImRcF3jupTa8
               </p>
               <a
                 href="https://docs.google.com/spreadsheets/d/18d2NpE-Y4cm19LjNWo7UPZdMPdcv8CQImRcF3jupTa8/edit"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600 hover:underline pt-1"
+                className="mt-1 inline-flex items-center gap-1 pt-1 text-[12px] font-semibold text-[#0f4c73] hover:underline"
               >
                 <ExternalLink className="h-3 w-3" />
                 <span>Buka Google Spreadsheet</span>
               </a>
-            </div>
+            </Card>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <Card className="p-4">
+              <h3 className="text-[12px] font-semibold uppercase tracking-wide text-[#4b5a6a]">
                 Google Drive Storage Folder
-              </span>
-              <p className="font-mono text-xs text-slate-800 font-semibold break-all">
+              </h3>
+              <p className="mt-1.5 break-all font-mono text-[12px] font-semibold text-[#0f4c73]">
                 1mQwSeNLsVGFaNzTKqbUyV4-NeViBuObo
               </p>
               <a
                 href="https://drive.google.com/drive/folders/1mQwSeNLsVGFaNzTKqbUyV4-NeViBuObo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-600 hover:underline pt-1"
+                className="mt-1 inline-flex items-center gap-1 pt-1 text-[12px] font-semibold text-[#0f4c73] hover:underline"
               >
                 <ExternalLink className="h-3 w-3" />
                 <span>Buka Google Drive</span>
               </a>
-            </div>
+            </Card>
           </div>
         </div>
       )}
@@ -1186,9 +1148,9 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
         title={editingShift ? 'Edit Shift Presensi' : 'Tambah Shift Baru'}
         maxWidth="sm"
       >
-        <form onSubmit={handleSaveShift} className="space-y-4">
+        <form onSubmit={handleSaveShift} className="space-y-3">
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+            <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
               Nama Shift
             </label>
             <input
@@ -1197,13 +1159,13 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
               onChange={(e) => setShiftNama(e.target.value)}
               placeholder="Contoh: Shift Pagi"
               required
-              className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Jam Mulai
               </label>
               <input
@@ -1212,12 +1174,12 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                 onChange={(e) => setShiftJamMulai(e.target.value)}
                 placeholder="08:00"
                 required
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 font-mono text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input font-mono"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
                 Jam Selesai
               </label>
               <input
@@ -1226,36 +1188,36 @@ export const PengaturanPage: React.FC<PengaturanPageProps> = ({
                 onChange={(e) => setShiftJamSelesai(e.target.value)}
                 placeholder="10:00"
                 required
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 font-mono text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
+            <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">
               Status Shift
             </label>
             <select
               value={shiftStatus}
               onChange={(e) => setShiftStatus(e.target.value as any)}
-              className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input"
             >
               <option value="Aktif">Aktif</option>
               <option value="Nonaktif">Nonaktif</option>
             </select>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-2 border-t border-[#e3e9ef] pt-3">
             <button
               type="button"
               onClick={() => setShiftModalOpen(false)}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700"
+              className="dm-btn-secondary !py-2"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white hover:bg-sky-700"
+              className="dm-btn-primary !py-2"
             >
               Simpan Shift
             </button>

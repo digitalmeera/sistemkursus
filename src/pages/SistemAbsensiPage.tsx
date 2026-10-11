@@ -3,21 +3,19 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { gasApi } from '../services/gasApi';
 import { Absensi, Peserta, Shift } from '../types';
 import { sound } from '../lib/sound';
-import { 
-  Camera, 
-  CameraOff, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Keyboard, 
-  Clock, 
-  User, 
-  Volume2, 
+import {
+  CameraOff,
+  CheckCircle2,
+  AlertTriangle,
+  Keyboard,
+  Clock,
+  Volume2,
   RefreshCw,
   ShieldAlert,
-  Sparkles,
   QrCode as QrCodeIcon,
   SwitchCamera
 } from 'lucide-react';
+import { PageHeader, Card, Toast } from '../components/ui';
 
 export const SistemAbsensiPage: React.FC = () => {
   const [cameraActive, setCameraActive] = useState<boolean>(false);
@@ -238,260 +236,196 @@ export const SistemAbsensiPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Title & Shift Status Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Sistem Absensi QR Code</span>
-            <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+    <div className="space-y-4">
+      <PageHeader
+        title="Absensi"
+        description="Arahkan kamera ke QR kartu siswa. Pemindaian berjalan otomatis."
+        actions={
+          <>
+            <span className="flex items-center gap-1.5 rounded-md border border-[#e3e9ef] bg-white px-2.5 py-1.5">
+              <Clock className="h-3.5 w-3.5 text-[#4b5a6a]" />
+              <select
+                value={selectedShift}
+                onChange={(e) => setSelectedShift(e.target.value)}
+                className="cursor-pointer bg-transparent text-[12px] font-semibold text-[#1a2430] focus:outline-none"
+              >
+                <option value="">Shift otomatis</option>
+                {shifts.map((s) => (
+                  <option key={s.idShift} value={s.namaShift}>
+                    {s.namaShift} ({s.jamMulai}–{s.jamSelesai})
+                  </option>
+                ))}
+              </select>
             </span>
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Arahkan kamera ke QR Code (rasio 1:1) kartu siswa. Pemindaian berlangsung kontinu dan otomatis.
-          </p>
-        </div>
+            <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-[#e3e9ef] bg-white px-2.5 py-1.5 text-[12px] font-semibold text-[#1a2430]">
+              <input
+                type="checkbox"
+                checked={override}
+                onChange={(e) => setOverride(e.target.checked)}
+                className="h-3.5 w-3.5"
+              />
+              <span>Override jam</span>
+            </label>
+          </>
+        }
+      />
 
-        {/* Shift Selector & Override Option */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-2xs">
-            <Clock className="h-4 w-4 text-sky-600" />
-            <select
-              value={selectedShift}
-              onChange={(e) => setSelectedShift(e.target.value)}
-              className="text-xs font-semibold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
-            >
-              <option value="">Shift Otomatis (Sesuai Jam)</option>
-              {shifts.map((s) => (
-                <option key={s.idShift} value={s.namaShift}>
-                  {s.namaShift} ({s.jamMulai} - {s.jamSelesai})
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-3 lg:col-span-7">
+          <Card className="overflow-hidden">
+            <div className="relative flex min-h-[320px] items-center justify-center bg-[#10161d] sm:min-h-[360px]">
+              <div id={containerId} className="h-full w-full overflow-hidden" />
 
-          <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 px-3 py-1.5 rounded-xl cursor-pointer shadow-2xs hover:bg-slate-50">
-            <input
-              type="checkbox"
-              checked={override}
-              onChange={(e) => setOverride(e.target.checked)}
-              className="h-3.5 w-3.5 text-sky-600 rounded border-slate-300"
-            />
-            <span>Override Jam</span>
-          </label>
-        </div>
-      </div>
-
-      {/* Main Grid: Scanner Left, Result & History Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Camera Viewfinder & Manual Input (7 Cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          {/* Scanner Viewfinder Box */}
-          <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-xl">
-            {/* Camera Frame */}
-            <div className="relative min-h-[320px] sm:min-h-[380px] flex items-center justify-center">
-              <div id={containerId} className="w-full h-full overflow-hidden" />
-
-              {/* Floating Flip Camera Button (Always accessible) */}
               <button
                 type="button"
                 onClick={handleFlipCamera}
                 disabled={isFlipping}
-                className="absolute top-3.5 right-3.5 z-30 inline-flex items-center gap-1.5 rounded-full bg-slate-900/85 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-white border border-slate-700/80 hover:bg-slate-800 shadow-lg transition-all active:scale-95 disabled:opacity-50"
-                title="Ganti ke kamera depan atau belakang"
+                className="absolute right-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-md border border-white/20 bg-black/60 px-2.5 py-1.5 text-[12px] font-semibold text-white hover:bg-black/80 disabled:opacity-50"
+                title="Ganti kamera"
               >
-                <SwitchCamera className={`h-3.5 w-3.5 text-sky-400 ${isFlipping ? 'animate-spin' : ''}`} />
-                <span>Flip: {cameraFacingMode === 'environment' ? 'Kamera Belakang' : 'Kamera Depan'}</span>
+                <SwitchCamera className="h-3.5 w-3.5" />
+                <span>{cameraFacingMode === 'environment' ? 'Belakang' : 'Depan'}</span>
               </button>
 
-              {/* QR Code 1:1 Square Target Box Overlay Animation */}
               {cameraActive && (
-                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center p-4">
-                  {/* Square 1:1 Frame with Corner Brackets */}
-                  <div className="relative h-56 w-56 sm:h-64 sm:w-64 aspect-square border-2 border-sky-400/80 rounded-2xl flex items-center justify-center shadow-[0_0_25px_rgba(14,165,233,0.3)]">
-                    {/* Corner Accent Brackets */}
-                    <div className="absolute -top-1 -left-1 h-6 w-6 border-t-4 border-l-4 border-sky-400 rounded-tl-lg" />
-                    <div className="absolute -top-1 -right-1 h-6 w-6 border-t-4 border-r-4 border-sky-400 rounded-tr-lg" />
-                    <div className="absolute -bottom-1 -left-1 h-6 w-6 border-b-4 border-l-4 border-sky-400 rounded-bl-lg" />
-                    <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b-4 border-r-4 border-sky-400 rounded-br-lg" />
-
-                    {/* Animated Scanning Laser Line */}
-                    <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_10px_#ef4444] animate-pulse" />
-
-                    {/* Frame Label */}
-                    <span className="absolute -bottom-7 text-[10px] font-mono tracking-widest text-sky-300 font-semibold uppercase bg-slate-900/80 px-2 py-0.5 rounded">
-                      Posisikan QR Code Disini (1:1)
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+                  <div className="relative flex h-56 w-56 items-center justify-center rounded-md border-2 border-white/80 sm:h-64 sm:w-64">
+                    <span className="absolute -bottom-6 rounded bg-black/70 px-2 py-0.5 font-mono text-[10px] tracking-wide text-white">
+                      Posisikan QR di sini
                     </span>
                   </div>
                 </div>
               )}
 
-              {/* Camera Error / Permission Fallback */}
               {!cameraActive && (
-                <div className="p-8 text-center text-white z-10 max-w-sm">
-                  <CameraOff className="mx-auto h-12 w-12 text-slate-500 mb-3" />
-                  <h4 className="text-sm font-bold text-slate-200">
-                    Kamera Tidak Aktif
-                  </h4>
-                  <p className="mt-1 text-xs text-slate-400 leading-relaxed">
-                    {cameraError || 'Browser membutuhkan izin untuk mengakses webcam/kamera.'}
+                <div className="z-10 max-w-sm p-8 text-center text-white">
+                  <CameraOff className="mx-auto mb-3 h-10 w-10 text-[#8494a5]" />
+                  <h4 className="text-[13px] font-semibold">Kamera tidak aktif</h4>
+                  <p className="mt-1 text-[12px] leading-relaxed text-[#8494a5]">
+                    {cameraError || 'Browser membutuhkan izin akses kamera.'}
                   </p>
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                     <button
                       type="button"
                       onClick={handleRestartCamera}
-                      className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-sky-700"
+                      className="dm-btn-primary !py-2 !text-[12px]"
                     >
                       <RefreshCw className="h-3.5 w-3.5" />
-                      <span>Coba Aktifkan Ulang</span>
+                      <span>Aktifkan ulang</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleFlipCamera}
-                      className="inline-flex items-center gap-2 rounded-xl bg-slate-800 border border-slate-700 px-4 py-2 text-xs font-semibold text-sky-300 shadow-xs hover:bg-slate-700"
+                      className="dm-btn-secondary !border-white/20 !bg-white/10 !py-2 !text-[12px] !text-white hover:!bg-white/20"
                     >
                       <SwitchCamera className="h-3.5 w-3.5" />
-                      <span>Ganti Kamera {cameraFacingMode === 'environment' ? 'Depan' : 'Belakang'}</span>
+                      <span>Ganti kamera</span>
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Viewfinder Status Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80 bg-slate-900/90 px-4 py-2.5 text-xs text-slate-400">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e3e9ef] bg-[#f7f9fb] px-3.5 py-2 text-[12px] text-[#4b5a6a]">
               <div className="flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${cameraActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                <span>{cameraActive ? 'QR Scanner Aktif' : 'Kamera Nonaktif'}</span>
-                <span className="text-slate-600">•</span>
-                <span className="text-sky-400 font-semibold">
-                  {cameraFacingMode === 'environment' ? 'Belakang (Environment)' : 'Depan (User)'}
-                </span>
+                <span className={`h-2 w-2 rounded-full ${cameraActive ? 'bg-[#1d6b3a]' : 'bg-[#a02a2a]'}`} />
+                <span>{cameraActive ? 'Scanner aktif' : 'Nonaktif'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleFlipCamera}
-                  disabled={!cameraActive || isFlipping}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 px-2.5 py-1 text-xs font-semibold transition-colors border border-slate-700 disabled:opacity-50"
-                  title="Balik ke kamera depan atau belakang"
-                >
-                  <SwitchCamera className={`h-3 w-3 text-sky-400 ${isFlipping ? 'animate-spin' : ''}`} />
-                  <span>Flip Kamera</span>
-                </button>
-                <div className="flex items-center gap-1 font-mono text-[11px] text-slate-400">
-                  <Volume2 className="h-3.5 w-3.5 text-sky-400" />
-                  <span>Beep ON</span>
-                </div>
+              <div className="flex items-center gap-1 tabular-nums">
+                <Volume2 className="h-3.5 w-3.5" />
+                <span>Beep on</span>
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Backup: Manual Barcode / USB Scanner Barcode Input */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <Card className="p-3.5">
             <form onSubmit={handleManualSubmit} className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Keyboard className="h-3.5 w-3.5 text-sky-600" />
-                <span>Input Manual / Scanner USB (QR / Barcode)</span>
+              <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#4b5a6a]">
+                <Keyboard className="h-3.5 w-3.5" />
+                <span>Input manual / scanner USB</span>
               </label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={manualBarcode}
                   onChange={(e) => setManualBarcode(e.target.value)}
-                  placeholder="Ketik Nomor Murid (contoh: DM0001) lalu Enter..."
-                  className="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 font-mono text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  placeholder="Ketik nomor murid, mis. DM0001, lalu Enter…"
+                  className="dm-input font-mono"
                 />
                 <button
                   type="submit"
                   disabled={isProcessing || !manualBarcode.trim()}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                  className="dm-btn-primary shrink-0"
                 >
-                  {isProcessing ? 'Memproses...' : 'Presensi'}
+                  {isProcessing ? 'Memproses…' : 'Catat'}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-600">
-                Mendukung scanner QR code optik kamera serta barcode reader USB eksternal secara otomatis.
-              </p>
             </form>
-          </div>
+          </Card>
         </div>
 
-        {/* Right Column: Instant Result Card & Session History (5 Cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          {/* Last Scan Result Card */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-              Status Presensi Terakhir
-            </h3>
+        <div className="space-y-3 lg:col-span-5">
+          <Card className="p-4">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-[#4b5a6a]">
+              Hasil terakhir
+            </p>
 
             {lastScanResult ? (
               <div
-                className={`rounded-2xl p-4 border transition-all ${
+                className={`rounded-md border p-3.5 ${
                   lastScanResult.isError
                     ? lastScanResult.isWarning
-                      ? 'border-amber-200 bg-amber-50 text-amber-900'
-                      : 'border-red-200 bg-red-50 text-red-900'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-950'
+                      ? 'border-[#e3cfa3] bg-[#fdf7ec]'
+                      : 'border-[#f0c9c9] bg-[#fdf0f0]'
+                    : 'border-[#c4e3cf] bg-[#eef7f1]'
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2.5">
                   {lastScanResult.isError ? (
                     lastScanResult.isWarning ? (
-                      <AlertTriangle className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
+                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#8a6d1b]" />
                     ) : (
-                      <ShieldAlert className="h-6 w-6 text-red-600 shrink-0 mt-0.5" />
+                      <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#a02a2a]" />
                     )
                   ) : (
-                    <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1d6b3a]" />
                   )}
 
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm leading-tight">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold leading-tight text-[#1a2430]">
                       {lastScanResult.message}
                     </p>
-                    <span className="text-[11px] font-mono text-slate-500 mt-0.5 block">
-                      Waktu scan: {lastScanResult.timestamp}
+                    <span className="mt-0.5 block font-mono text-[11px] text-[#8494a5]">
+                      {lastScanResult.timestamp}
                     </span>
 
-                    {/* Jika sukses, tampilkan detail siswa */}
                     {lastScanResult.absensi && (
-                      <div className="mt-3.5 pt-3 border-t border-emerald-200/80 space-y-1.5 text-xs text-slate-800">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Nomor Murid:</span>
-                          <span className="font-mono font-bold text-sky-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
-                            {lastScanResult.absensi.nomorMurid}
-                          </span>
+                      <dl className="mt-3 space-y-1.5 border-t border-[#c4e3cf] pt-3 text-[12px]">
+                        <div className="flex items-center justify-between gap-2">
+                          <dt className="text-[#4b5a6a]">No. murid</dt>
+                          <dd className="font-mono font-semibold text-[#0f4c73]">{lastScanResult.absensi.nomorMurid}</dd>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Nama Peserta:</span>
-                          <span className="font-bold truncate max-w-[180px]">
-                            {lastScanResult.absensi.namaPeserta}
-                          </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <dt className="text-[#4b5a6a]">Nama</dt>
+                          <dd className="max-w-[180px] truncate font-semibold">{lastScanResult.absensi.namaPeserta}</dd>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Program Kelas:</span>
-                          <span className="font-semibold text-slate-700">
-                            {lastScanResult.absensi.programKelas}
-                          </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <dt className="text-[#4b5a6a]">Program</dt>
+                          <dd>{lastScanResult.absensi.programKelas}</dd>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Shift / Jam:</span>
-                          <span className="font-medium text-slate-700">
-                            {lastScanResult.absensi.shift} &bull; {lastScanResult.absensi.waktu}
-                          </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <dt className="text-[#4b5a6a]">Shift / jam</dt>
+                          <dd className="tabular-nums">{lastScanResult.absensi.shift} · {lastScanResult.absensi.waktu}</dd>
                         </div>
-                      </div>
+                      </dl>
                     )}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center text-slate-400">
-                <QrCodeIcon className="mx-auto h-10 w-10 text-slate-300 mb-2" />
-                <p className="text-xs font-semibold text-slate-600">
+              <div className="rounded-md border border-dashed border-[#e3e9ef] bg-[#f7f9fb] p-8 text-center">
+                <QrCodeIcon className="mx-auto mb-2 h-8 w-8 text-[#8494a5]" />
+                <p className="text-[12px] font-semibold text-[#1a2430]">
                   Belum Ada Pemindaian QR Code
                 </p>
                 <p className="text-[11px] text-slate-600 mt-0.5">
@@ -499,19 +433,18 @@ export const SistemAbsensiPage: React.FC = () => {
                 </p>
               </div>
             )}
-          </div>
+          </Card>
 
-          {/* Session History (10 scans) */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Riwayat Sesi Ini ({sessionScans.length})
-              </h3>
+          <Card className="p-4">
+            <div className="mb-2.5 flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#4b5a6a]">
+                Riwayat sesi ({sessionScans.length})
+              </p>
               {sessionScans.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setSessionScans([])}
-                  className="text-[11px] text-slate-400 hover:text-slate-600 hover:underline"
+                  className="text-[11px] text-[#8494a5] hover:text-[#1a2430] hover:underline"
                 >
                   Bersihkan
                 </button>
@@ -519,38 +452,38 @@ export const SistemAbsensiPage: React.FC = () => {
             </div>
 
             {sessionScans.length > 0 ? (
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              <div className="max-h-[300px] space-y-1.5 overflow-y-auto pr-1">
                 {sessionScans.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 text-xs transition-colors hover:bg-slate-100/70"
+                    className="flex items-center justify-between rounded-md border border-[#eef2f6] bg-[#f7f9fb] p-2 text-[12px]"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-bold text-[11px] text-sky-700">
+                        <span className="font-mono text-[11px] font-semibold text-[#0f4c73]">
                           {item.nomorMurid}
                         </span>
-                        <span className="font-semibold text-slate-900 truncate">
+                        <span className="truncate font-semibold text-[#1a2430]">
                           {item.nama}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-500">
-                        {item.shift} &bull; {item.waktu}
+                      <span className="tabular-nums text-[11px] text-[#8494a5]">
+                        {item.shift} · {item.waktu}
                       </span>
                     </div>
 
-                    <span className="ml-2 shrink-0 rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                    <span className="dm-badge dm-badge-active ml-2 shrink-0">
                       {item.status}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="py-4 text-center text-xs text-slate-400">
-                Riwayat presensi sesi berjalan akan muncul di sini.
+              <p className="py-4 text-center text-[12px] text-[#8494a5]">
+                Riwayat presensi sesi ini akan muncul di sini.
               </p>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>

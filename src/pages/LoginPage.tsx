@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { GraduationCap, Lock, User, AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { BrandLogo } from '../components/ui';
 import { gasApi } from '../services/gasApi';
 import { AdminUser, ProfilLembaga } from '../types';
 
@@ -21,10 +22,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, profil }) 
       setError('Username dan password wajib diisi.');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
       const res = await gasApi.login(username.trim(), password);
       if (res.success && res.data) {
@@ -40,91 +39,71 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, profil }) 
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-radial from-slate-900 via-slate-950 to-black p-4 sm:p-6">
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur-xl">
-          {/* Card Header with Glowing Accent */}
-          <div className="relative border-b border-slate-800 bg-gradient-to-b from-sky-500/10 to-transparent p-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 shadow-lg shadow-sky-500/25">
-              {profil.logo ? (
-                <img src={profil.logo} alt="Logo" className="h-10 w-10 object-contain" />
-              ) : (
-                <GraduationCap className="h-9 w-9 text-white" />
-              )}
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-white">
+    <div className="flex min-h-screen items-center justify-center bg-[#f4f6f8] p-4">
+      <div className="w-full max-w-[400px]">
+        <div className="mb-5 flex items-center gap-3">
+          <BrandLogo
+            src={profil.logo}
+            boxClassName="h-10 w-10 rounded-md border border-[#e3e9ef] bg-white"
+          />
+          <div>
+            <p className="text-[15px] font-semibold text-[#1a2430] leading-none">
               {profil.namaLembaga || 'DIGITALMEERA'}
-            </h1>
-            <p className="mt-1 text-xs font-medium uppercase tracking-widest text-sky-400">
-              Sistem Pendaftaran & Absensi Kursus
             </p>
+            <p className="mt-1 text-[12px] text-[#4b5a6a]">Sistem pendaftaran & absensi kursus</p>
           </div>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-8 space-y-5">
+        <div className="dm-card p-6">
+          <h1 className="text-[15px] font-semibold text-[#1a2430]">Masuk</h1>
+          <p className="mt-0.5 text-[12px] text-[#4b5a6a]">Gunakan akun administrator untuk mengelola data.</p>
+
+          <form onSubmit={handleSubmit} className="mt-5 space-y-3.5">
             {error && (
-              <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-300 animate-in fade-in">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+              <div className="flex items-start gap-2 rounded-md border border-[#f0c9c9] bg-[#fdf0f0] p-2.5 text-[12px] text-[#a02a2a]">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{error}</p>
               </div>
             )}
 
-            {/* Username */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Username Administrator
-              </label>
-              <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                  <User className="h-4 w-4" />
-                </div>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Masukkan username"
-                  required
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800/80 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-                />
-              </div>
+            <div>
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="admin"
+                autoComplete="username"
+                required
+                className="dm-input"
+              />
             </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Password
-              </label>
+            <div>
+              <label className="mb-1 block text-[12px] font-semibold text-[#1a2430]">Password</label>
               <div className="relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-                  <Lock className="h-4 w-4" />
-                </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Masukkan password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
                   required
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800/80 py-2.5 pl-10 pr-10 text-sm text-white placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  className="dm-input pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-white"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#8494a5] hover:text-[#1a2430]"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/25 hover:from-sky-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading} className="dm-btn-primary w-full justify-center">
               {loading ? (
-                <span>Memverifikasi...</span>
+                <span>Memverifikasi…</span>
               ) : (
                 <>
                   <span>Masuk ke Dashboard</span>
@@ -132,25 +111,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, profil }) 
                 </>
               )}
             </button>
-
-            {/* Initial Credential Note */}
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-center">
-              <p className="text-[11px] text-slate-400 font-medium">
-                Akun Administrator Awal:
-              </p>
-              <p className="text-xs text-sky-400 font-mono mt-0.5">
-                Username: <span className="text-white font-semibold">admin</span> &bull; Password: <span className="text-white font-semibold">Digitalmeera@2026</span>
-              </p>
-            </div>
           </form>
-
-          {/* Footer */}
-          <div className="border-t border-slate-800/80 bg-slate-950/40 p-4 text-center">
-            <p className="text-[11px] text-slate-400">
-              {profil.footer || '© DIGITALMEERA - Sistem Kursus & Les Privat'}
-            </p>
-          </div>
         </div>
+
+        <p className="mt-4 text-center text-[11px] text-[#8494a5]">
+          {profil.footer || '© DIGITALMEERA — Sistem Kursus & Les Privat'}
+        </p>
       </div>
     </div>
   );

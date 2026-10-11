@@ -1,15 +1,15 @@
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
-  ClipboardList, 
-  QrCode, 
-  FileSpreadsheet, 
-  Settings, 
-  LogOut, 
+import { BrandLogo } from './ui';
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  ClipboardList,
+  QrCode,
+  FileSpreadsheet,
+  Settings,
+  LogOut,
   X,
-  GraduationCap,
   ExternalLink
 } from 'lucide-react';
 
@@ -30,6 +30,7 @@ interface SidebarProps {
   onLogout: () => void;
   appTitle?: string;
   footerText?: string;
+  logo?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -40,63 +41,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   appTitle = 'DIGITALMEERA',
   footerText = '© DIGITALMEERA',
+  logo = '',
 }) => {
-  const menuItems: Array<{ id: ActivePage; label: string; icon: React.FC<{ className?: string }> }> = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'peserta', label: 'Data Peserta', icon: Users },
-    { id: 'kartu', label: 'Kartu Peserta', icon: CreditCard },
-    { id: 'absensi', label: 'Sistem Absensi', icon: QrCode },
-    { id: 'monitoring', label: 'Monitoring Absensi', icon: ClipboardList },
-    { id: 'laporan', label: 'Laporan & Export', icon: FileSpreadsheet },
-    { id: 'pengaturan', label: 'Pengaturan Sistem', icon: Settings },
+  const menuItems: Array<{ id: ActivePage; label: string; hint: string; icon: React.FC<{ className?: string }> }> = [
+    { id: 'dashboard', label: 'Dashboard', hint: 'Ringkasan', icon: LayoutDashboard },
+    { id: 'peserta', label: 'Data Peserta', hint: 'Pendaftaran', icon: Users },
+    { id: 'kartu', label: 'Kartu Peserta', hint: 'Cetak', icon: CreditCard },
+    { id: 'absensi', label: 'Absensi', hint: 'Scanner', icon: QrCode },
+    { id: 'monitoring', label: 'Monitoring', hint: 'Kehadiran', icon: ClipboardList },
+    { id: 'laporan', label: 'Laporan', hint: 'Export', icon: FileSpreadsheet },
+    { id: 'pengaturan', label: 'Pengaturan', hint: 'Sistem', icon: Settings },
   ];
 
   return (
     <>
-      {/* Mobile Backdrop */}
       {isOpen && (
-        <div 
+        <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
         />
       )}
 
-      {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-slate-900 text-white transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 flex w-60 flex-col border-r border-[#e3e9ef] bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-800 px-5">
+        <div className="flex h-14 items-center justify-between border-b border-[#e3e9ef] px-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500 font-bold text-white shadow-md">
-              <GraduationCap className="h-5 w-5 text-white" />
-            </div>
+            <BrandLogo
+              src={logo}
+              boxClassName="h-8 w-8 rounded-md border border-[#e3e9ef] bg-white"
+            />
             <div>
-              <h1 className="font-bold tracking-wider text-sm text-white">
+              <h1 className="text-[13px] font-semibold tracking-tight text-[#1a2430] leading-none">
                 {appTitle}
               </h1>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">
-                Sistem Kursus & Absensi
+              <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-[#8494a5]">
+                Kursus & Absensi
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white lg:hidden"
+            className="rounded-md p-1.5 text-[#4b5a6a] hover:bg-[#f0f3f6] lg:hidden"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Navigation Items */}
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          <div className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Menu Utama
-          </div>
-          <nav className="space-y-1">
+        <div className="flex-1 overflow-y-auto px-2.5 py-3">
+          <nav className="space-y-0.5">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activePage === item.id;
@@ -108,60 +104,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onSelectPage(item.id);
                     onClose();
                   }}
-                  className={`group flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all ${
+                  className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] transition-colors ${
                     isActive
-                      ? 'bg-sky-500 text-white shadow-sm font-semibold'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                      ? 'bg-[#eef5fb] font-semibold text-[#0f4c73]'
+                      : 'font-medium text-[#4b5a6a] hover:bg-[#f4f6f8] hover:text-[#1a2430]'
                   }`}
                 >
-                  <Icon
-                    className={`h-4.5 w-4.5 transition-colors ${
-                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-sky-400'
-                    }`}
-                  />
-                  <span>{item.label}</span>
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="flex-1">{item.label}</span>
+                  <span className="text-[10px] font-normal text-[#8494a5]">{item.hint}</span>
                 </button>
               );
             })}
           </nav>
 
-          {/* Public Registration Link */}
-          <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+          <div className="mt-3 border-t border-[#e3e9ef] pt-3">
             <a
               href="/pendaftaran.html"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between rounded-lg bg-sky-950/60 border border-sky-800/50 px-3 py-2 text-xs font-semibold text-sky-300 hover:bg-sky-900/60 hover:text-white transition-all shadow-2xs group"
-              title="Buka form pendaftaran mandiri calon siswa"
+              className="flex items-center justify-between rounded-md border border-[#e3e9ef] px-2.5 py-2 text-[12px] font-semibold text-[#0f4c73] hover:bg-[#f4f6f8]"
+              title="Buka form pendaftaran mandiri"
             >
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-                <span>Pendaftaran Mandiri</span>
-              </div>
-              <ExternalLink className="h-3.5 w-3.5 text-sky-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              <span>Pendaftaran Mandiri</span>
+              <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
         </div>
 
-        {/* Bottom Section: Logout & Footer */}
-        <div className="border-t border-slate-800 p-3">
+        <div className="border-t border-[#e3e9ef] p-2.5">
           <button
             type="button"
             onClick={onLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium text-[#4b5a6a] hover:bg-[#fdf0f0] hover:text-[#a02a2a]"
           >
-            <LogOut className="h-4.5 w-4.5" />
-            <span>Logout</span>
+            <LogOut className="h-4 w-4" />
+            <span>Keluar</span>
           </button>
-
-          <div className="mt-3 px-3 text-center">
-            <p className="text-[11px] text-slate-400 truncate">
-              {footerText}
-            </p>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Google Apps Script Backend
-            </p>
-          </div>
+          <p className="mt-2 truncate px-2.5 text-center text-[10px] text-[#8494a5]">
+            {footerText}
+          </p>
         </div>
       </aside>
     </>

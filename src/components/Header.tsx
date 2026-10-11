@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Menu, 
-  Clock, 
-  User, 
+import {
+  Menu,
+  Clock,
   LogOut,
   RefreshCw,
-  Database
 } from 'lucide-react';
 import { ProfilLembaga } from '../types';
 import { gasApi } from '../services/gasApi';
+import { BrandLogo } from './ui';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -35,6 +34,8 @@ export const Header: React.FC<HeaderProps> = ({
       const res = await gasApi.syncAll(true);
       if (res.success && res.data) {
         setSyncFeedback(`Tersinkron: ${res.data.peserta.length} siswa`);
+        // Beri tahu halaman aktif sekali saja (aksi manual user — bukan loop).
+        window.dispatchEvent(new CustomEvent('digitalmeera_synced'));
       } else {
         setSyncFeedback(res.message || 'Sinkronisasi selesai');
       }
@@ -72,86 +73,63 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-md sm:px-6">
-      {/* Left: Mobile hamburger & Title */}
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-[#e3e9ef] bg-white px-4 sm:px-5">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+          className="rounded-md p-2 text-[#4b5a6a] hover:bg-[#f0f3f6] lg:hidden"
           title="Buka Menu"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4 w-4" />
         </button>
 
         <div className="flex items-center gap-2">
-          {profil.logo ? (
-            <img 
-              src={profil.logo} 
-              alt="Logo" 
-              className="h-8 w-8 rounded-md object-contain border border-slate-200" 
-            />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-sky-600 to-indigo-600 font-bold text-white text-xs tracking-wider shadow-sm">
-              DM
-            </div>
-          )}
-          <span className="hidden sm:inline font-bold tracking-tight text-slate-800 text-base">
+          <BrandLogo
+            src={profil.logo}
+            boxClassName="h-7 w-7 rounded border border-[#e3e9ef] bg-white"
+          />
+          <span className="hidden text-[13px] font-semibold text-[#1a2430] sm:inline">
             {profil.namaLembaga || 'DIGITALMEERA'}
-          </span>
-          <span className="hidden md:inline text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-            Presensi & Kursus
           </span>
         </div>
       </div>
 
-      {/* Right: Refresh button, Clock & Admin Info */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Global Segarkan Data Button */}
+      <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={handleGlobalSync}
             disabled={isSyncing}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold shadow-2xs transition-all disabled:opacity-60 ${
-              isSyncing
-                ? 'border-sky-300 bg-sky-50 text-sky-700'
-                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300'
-            }`}
-            title="Segarkan data langsung dari Google Spreadsheet"
+            className="dm-btn-secondary !py-1.5 !text-[12px]"
+            title="Segarkan data dari Google Spreadsheet"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin text-sky-600' : 'text-slate-500'}`} />
-            <span className="hidden sm:inline">{isSyncing ? 'Menyinkronkan...' : 'Segarkan Data'}</span>
+            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{isSyncing ? 'Menyinkronkan…' : 'Segarkan'}</span>
           </button>
           {syncFeedback && (
-            <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md animate-in fade-in hidden md:inline">
+            <span className="hidden text-[11px] font-medium text-[#1d6b3a] md:inline">
               {syncFeedback}
             </span>
           )}
         </div>
 
-        {/* Real-time Clock */}
-        <div className="hidden lg:flex items-center gap-2 text-xs text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80">
-          <Clock className="h-3.5 w-3.5 text-sky-500" />
-          <span className="font-semibold text-slate-800">{currentTime}</span>
-          <span className="text-slate-500">|</span>
-          <span className="text-slate-600">{currentDate}</span>
+        <div className="hidden items-center gap-2 border border-[#e3e9ef] bg-[#f7f9fb] px-2.5 py-1.5 text-[12px] text-[#4b5a6a] lg:flex">
+          <Clock className="h-3.5 w-3.5" />
+          <span className="font-semibold tabular-nums text-[#1a2430]">{currentTime}</span>
+          <span>{currentDate}</span>
         </div>
 
-        {/* User Profile */}
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-            <User className="h-4 w-4" />
-          </div>
-          <div className="hidden xl:block text-left text-xs">
-            <p className="font-semibold text-slate-800 leading-none">{adminName || 'Admin'}</p>
-            <p className="text-slate-600 mt-0.5">Administrator</p>
+        <div className="flex items-center gap-2 border-l border-[#e3e9ef] pl-2.5">
+          <div className="hidden text-right text-[12px] xl:block">
+            <p className="font-semibold leading-none text-[#1a2430]">{adminName || 'Admin'}</p>
+            <p className="mt-0.5 text-[#8494a5]">Administrator</p>
           </div>
           <button
             type="button"
             onClick={onLogout}
-            className="rounded-lg p-1.5 text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
-            title="Keluar / Logout"
+            className="rounded-md p-1.5 text-[#4b5a6a] hover:bg-[#fdf0f0] hover:text-[#a02a2a]"
+            title="Keluar"
           >
             <LogOut className="h-4 w-4" />
           </button>

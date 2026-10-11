@@ -12,6 +12,7 @@ import { PengaturanPage } from './pages/PengaturanPage';
 import { GasConnectionModal } from './components/GasConnectionModal';
 import { GasCodeViewerModal } from './components/GasCodeViewerModal';
 import { gasApi } from './services/gasApi';
+import { applyFavicon } from './lib/brand';
 import { AdminUser, ProfilLembaga } from './types';
 
 const ADMIN_SESSION_KEY = 'digitalmeera_admin_session';
@@ -62,6 +63,14 @@ export function App() {
     initApp();
   }, []);
 
+  // Favicon + judul tab mengikuti identitas lembaga dari Pengaturan
+  useEffect(() => {
+    applyFavicon(profil.logo);
+    if (typeof document !== 'undefined' && profil.namaLembaga) {
+      document.title = `${profil.namaLembaga} - Sistem Pendaftaran & Absensi Kursus`;
+    }
+  }, [profil.logo, profil.namaLembaga]);
+
   const handleLoginSuccess = (admin: AdminUser) => {
     setCurrentUser(admin);
     if (typeof window !== 'undefined') {
@@ -87,7 +96,7 @@ export function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-800 antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f4f6f8] font-sans text-[#1a2430] antialiased">
       {/* Sidebar Navigation */}
       <Sidebar
         activePage={activePage}
@@ -97,6 +106,7 @@ export function App() {
         onLogout={handleLogout}
         appTitle={profil.namaLembaga}
         footerText={profil.footer}
+        logo={profil.logo}
       />
 
       {/* Main Content Area */}
@@ -110,8 +120,8 @@ export function App() {
         />
 
         {/* Scrollable Page Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl">
+        <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+          <div className="mx-auto max-w-6xl">
             {activePage === 'dashboard' && (
               <DashboardPage onNavigate={(p) => setActivePage(p)} />
             )}
@@ -143,7 +153,7 @@ export function App() {
           </div>
 
           {/* Page Footer */}
-          <footer className="mt-12 text-center text-xs text-slate-400 pb-4">
+          <footer className="mt-8 border-t border-[#e3e9ef] pb-4 pt-3 text-[11px] text-[#8494a5]">
             <p>{profil.footer || '© DIGITALMEERA - Sistem Kursus & Les Privat'}</p>
           </footer>
         </main>

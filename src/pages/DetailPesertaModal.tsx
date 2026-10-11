@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../components/Modal';
+import { StudentPhoto } from '../components/ui';
 import { Peserta, ProfilLembaga, CardTemplateConfig } from '../types';
 import { downloadSingleCardPdf, downloadCardAsJpg } from '../lib/exportPdf';
 import { FileText, Image as ImageIcon, QrCode as QrCodeIcon } from 'lucide-react';
@@ -45,15 +46,7 @@ export const DetailPesertaModal: React.FC<DetailPesertaModalProps> = ({
         {/* Top Header Card */}
         <div className="flex flex-col sm:flex-row items-center gap-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
           {/* Foto Siswa */}
-          <div className="h-28 w-24 shrink-0 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-xs">
-            {peserta.foto ? (
-              <img src={peserta.foto} alt={peserta.namaPeserta} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-500 font-bold text-xl">
-                {peserta.namaPeserta.slice(0, 2).toUpperCase()}
-              </div>
-            )}
-          </div>
+          <StudentPhoto src={peserta.foto} name={peserta.namaPeserta} size="lg" />
 
           {/* Core Info */}
           <div className="flex-1 text-center sm:text-left space-y-1">

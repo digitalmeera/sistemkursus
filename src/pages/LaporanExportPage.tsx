@@ -3,16 +3,13 @@ import { Absensi, Peserta, ProfilLembaga, Shift } from '../types';
 import { gasApi } from '../services/gasApi';
 import { exportAbsensiToExcel, exportPesertaToExcel } from '../lib/exportExcel';
 import { exportAbsensiToPdf } from '../lib/exportPdf';
-import { 
-  FileSpreadsheet, 
-  FileText, 
-  Download, 
-  Calendar, 
-  Filter, 
-  Users, 
-  CheckCircle2, 
-  Clock,
-  Printer
+import { PageHeader, Card, EmptyState, StatusBadge } from '../components/ui';
+import {
+  FileSpreadsheet,
+  FileText,
+  Users,
+  ClipboardList,
+  RefreshCw,
 } from 'lucide-react';
 
 interface LaporanExportPageProps {
@@ -151,79 +148,83 @@ export const LaporanExportPage: React.FC<LaporanExportPageProps> = ({ profil }) 
     exportPesertaToExcel(filteredPeserta, 'Data_Peserta_Digitalmeera.xlsx');
   };
 
+  const periodeOptions = [
+    { id: 'hari-ini', label: 'Hari ini' },
+    { id: 'kemarin', label: 'Kemarin' },
+    { id: 'minggu-ini', label: 'Minggu ini' },
+    { id: 'bulan-ini', label: 'Bulan ini' },
+    { id: 'bulan-lalu', label: 'Bulan lalu' },
+    { id: 'custom', label: 'Rentang khusus' },
+  ];
+
+  void loading;
+
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-          Laporan & Export Data
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Rekap data kehadiran dan data murid lengkap dalam format spreadsheet Excel (.xlsx) dan PDF resmi.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Laporan & Export Data"
+        description="Rekap kehadiran dan data peserta dalam format Excel (.xlsx) dan PDF."
+        actions={
+          <button type="button" onClick={fetchData} disabled={isSyncing} className="dm-btn-secondary !py-2">
+            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Menyinkronkan…' : 'Segarkan'}</span>
+          </button>
+        }
+      />
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex gap-1 border-b border-[#e3e9ef]">
         <button
           type="button"
           onClick={() => setActiveTab('absensi')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-bold transition-colors ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-[13px] font-semibold transition-colors ${
             activeTab === 'absensi'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-[#0f4c73] text-[#0f4c73]'
+              : 'border-transparent text-[#8494a5] hover:text-[#1a2430]'
           }`}
         >
-          <FileSpreadsheet className="h-4 w-4" />
-          <span>Laporan Kehadiran & Absensi</span>
+          <ClipboardList className="h-4 w-4" />
+          <span>Laporan kehadiran</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('peserta')}
-          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs sm:text-sm font-bold transition-colors ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-[13px] font-semibold transition-colors ${
             activeTab === 'peserta'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-[#0f4c73] text-[#0f4c73]'
+              : 'border-transparent text-[#8494a5] hover:text-[#1a2430]'
           }`}
         >
           <Users className="h-4 w-4" />
-          <span>Laporan Data Peserta</span>
+          <span>Data peserta</span>
         </button>
       </div>
 
       {/* TAB 1: ABSENSI */}
       {activeTab === 'absensi' && (
-        <div className="space-y-6">
-          {/* Filters Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Filter Parameter Laporan
+        <div className="space-y-4">
+          <Card className="space-y-3 p-4">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[#4b5a6a]">
+              Filter laporan
             </h3>
 
             {/* Periode Buttons */}
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-2">
-                Pilih Periode:
+              <label className="mb-1.5 block text-[12px] font-semibold text-[#4b5a6a]">
+                Periode
               </label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'hari-ini', label: 'Hari Ini' },
-                  { id: 'kemarin', label: 'Kemarin' },
-                  { id: 'minggu-ini', label: 'Minggu Ini' },
-                  { id: 'bulan-ini', label: 'Bulan Ini' },
-                  { id: 'bulan-lalu', label: 'Bulan Lalu' },
-                  { id: 'custom', label: 'Rentang Khusus (Custom)' },
-                ].map((p) => (
+              <div className="flex flex-wrap gap-1.5">
+                {periodeOptions.map((p) => (
                   <button
                     key={p.id}
                     type="button"
                     onClick={() => setPeriode(p.id)}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
+                    className={
                       periode === p.id
-                        ? 'bg-sky-600 text-white shadow-2xs'
-                        : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
+                        ? 'dm-btn-primary !px-3 !py-1.5 !text-[12px]'
+                        : 'dm-btn-secondary !px-3 !py-1.5 !text-[12px]'
+                    }
                   >
                     {p.label}
                   </button>
@@ -233,51 +234,51 @@ export const LaporanExportPage: React.FC<LaporanExportPageProps> = ({ profil }) 
 
             {/* Custom Date Picker */}
             {periode === 'custom' && (
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-wrap items-end gap-2">
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-1">Mulai:</span>
+                  <span className="mb-1 block text-[12px] font-semibold text-[#4b5a6a]">Mulai</span>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+                    className="dm-input !w-auto"
                   />
                 </div>
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-1">Sampai:</span>
+                  <span className="mb-1 block text-[12px] font-semibold text-[#4b5a6a]">Sampai</span>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-700"
+                    className="dm-input !w-auto"
                   />
                 </div>
               </div>
             )}
 
             {/* Program, Shift, Status Dropdowns */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+            <div className="grid grid-cols-1 gap-2 border-t border-[#e3e9ef] pt-3 sm:grid-cols-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Program Kelas</label>
+                <label className="mb-1 block text-[12px] font-semibold text-[#4b5a6a]">Program kelas</label>
                 <select
                   value={filterProgram}
                   onChange={(e) => setFilterProgram(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700"
+                  className="dm-input"
                 >
-                  <option value="all">Semua Program</option>
+                  <option value="all">Semua program</option>
                   <option value="Office Pemula">Paket Office Pemula</option>
                   <option value="Office + Desain">Paket Office + Desain</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Shift</label>
+                <label className="mb-1 block text-[12px] font-semibold text-[#4b5a6a]">Shift</label>
                 <select
                   value={filterShift}
                   onChange={(e) => setFilterShift(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700"
+                  className="dm-input"
                 >
-                  <option value="all">Semua Shift</option>
+                  <option value="all">Semua shift</option>
                   {shifts.map((s) => (
                     <option key={s.idShift} value={s.namaShift}>
                       {s.namaShift}
@@ -287,13 +288,13 @@ export const LaporanExportPage: React.FC<LaporanExportPageProps> = ({ profil }) 
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Status Kehadiran</label>
+                <label className="mb-1 block text-[12px] font-semibold text-[#4b5a6a]">Status kehadiran</label>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700"
+                  className="dm-input"
                 >
-                  <option value="all">Semua Status</option>
+                  <option value="all">Semua status</option>
                   <option value="Hadir">Hadir</option>
                   <option value="Izin">Izin</option>
                   <option value="Sakit">Sakit</option>
@@ -303,9 +304,9 @@ export const LaporanExportPage: React.FC<LaporanExportPageProps> = ({ profil }) 
             </div>
 
             {/* Export Buttons */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-              <span className="text-xs font-semibold text-slate-600">
-                Total rekaman ditemukan: <strong>{filteredAbsensi.length}</strong> data
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#e3e9ef] pt-3">
+              <span className="text-[12px] tabular-nums text-[#4b5a6a]">
+                {filteredAbsensi.length} rekaman · Periode: {currentRange.label}
               </span>
 
               <div className="flex items-center gap-2">
@@ -313,63 +314,65 @@ export const LaporanExportPage: React.FC<LaporanExportPageProps> = ({ profil }) 
                   type="button"
                   onClick={handleExportAbsensiExcel}
                   disabled={filteredAbsensi.length === 0}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                  className="dm-btn-secondary !py-2 disabled:opacity-40"
                 >
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                  <span>Export Excel (.xlsx)</span>
+                  <FileSpreadsheet className="h-4 w-4" />
+                  <span>Export Excel</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleExportAbsensiPdf}
                   disabled={filteredAbsensi.length === 0}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-sky-700 transition-colors disabled:opacity-50"
+                  className="dm-btn-primary !py-2 disabled:opacity-50"
                 >
                   <FileText className="h-4 w-4" />
                   <span>Export PDF</span>
                 </button>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Table Preview */}
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Pratinjau Hasil Laporan
+          <Card>
+            <div className="flex items-center justify-between border-b border-[#e3e9ef] px-4 py-2.5">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[#4b5a6a]">
+                Pratinjau laporan
               </h4>
-              <span className="text-xs text-slate-500 font-medium">Periode: {currentRange.label}</span>
+              <span className="text-[12px] text-[#8494a5]">Periode: {currentRange.label}</span>
             </div>
 
             {filteredAbsensi.length > 0 ? (
-              <div className="overflow-x-auto max-h-96">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 border-b border-slate-200">
+              <div className="max-h-96 overflow-x-auto">
+                <table className="dm-table w-full">
+                  <thead className="sticky top-0">
                     <tr>
-                      <th className="px-4 py-2.5">No</th>
-                      <th className="px-4 py-2.5">Tanggal</th>
-                      <th className="px-4 py-2.5">Jam</th>
-                      <th className="px-4 py-2.5">Nomor Murid</th>
-                      <th className="px-4 py-2.5">Nama Peserta</th>
-                      <th className="px-4 py-2.5">Program</th>
-                      <th className="px-4 py-2.5">Shift</th>
-                      <th className="px-4 py-2.5">Status</th>
+                      <th>No</th>
+                      <th>Tanggal</th>
+                      <th>Jam</th>
+                      <th>Nomor murid</th>
+                      <th>Nama peserta</th>
+                      <th>Program</th>
+                      <th>Shift</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody>
                     {filteredAbsensi.map((item, idx) => (
-                      <tr key={item.idAbsensi || idx} className="hover:bg-slate-50">
-                        <td className="px-4 py-2 font-mono text-slate-400">{idx + 1}</td>
-                        <td className="px-4 py-2 text-slate-600">{item.tanggal}</td>
-                        <td className="px-4 py-2 font-mono text-slate-800">{item.waktu}</td>
-                        <td className="px-4 py-2 font-mono font-bold text-sky-700">{item.nomorMurid}</td>
-                        <td className="px-4 py-2 font-semibold text-slate-900">{item.namaPeserta}</td>
-                        <td className="px-4 py-2 text-slate-600">{item.programKelas}</td>
-                        <td className="px-4 py-2 text-slate-600">{item.shift}</td>
-                        <td className="px-4 py-2">
-                          <span className="inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                            {item.statusPresensi}
-                          </span>
+                      <tr key={item.idAbsensi || idx}>
+                        <td className="font-mono tabular-nums text-[#8494a5]">{idx + 1}</td>
+                        <td className="whitespace-nowrap text-[#4b5a6a]">{item.tanggal}</td>
+                        <td className="whitespace-nowrap font-mono text-[#1a2430]">{item.waktu}</td>
+                        <td className="whitespace-nowrap">
+                          <span className="dm-badge dm-badge-id">{item.nomorMurid}</span>
+                        </td>
+                        <td className="whitespace-nowrap font-semibold text-[#1a2430]">{item.namaPeserta}</td>
+                        <td className="whitespace-nowrap text-[#4b5a6a]">{item.programKelas}</td>
+                        <td className="whitespace-nowrap">
+                          <span className="dm-badge dm-badge-muted">{item.shift}</span>
+                        </td>
+                        <td className="whitespace-nowrap">
+                          <StatusBadge value={item.statusPresensi} />
                         </td>
                       </tr>
                     ))}
@@ -377,90 +380,87 @@ export const LaporanExportPage: React.FC<LaporanExportPageProps> = ({ profil }) 
                 </table>
               </div>
             ) : (
-              <div className="p-8 text-center text-xs text-slate-400">
-                Tidak ada data presensi pada parameter filter yang dipilih.
-              </div>
+              <EmptyState
+                icon={<ClipboardList className="h-5 w-5" />}
+                title="Tidak ada data"
+                description="Tidak ada data presensi pada parameter filter yang dipilih."
+              />
             )}
-          </div>
+          </Card>
         </div>
       )}
 
       {/* TAB 2: DATA PESERTA */}
       {activeTab === 'peserta' && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="space-y-4">
+          <Card className="space-y-3 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Laporan Master Data Peserta
+                <h3 className="text-sm font-semibold text-[#1a2430]">
+                  Laporan master data peserta
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Export seluruh biodata siswa, nomor murid DM, orang tua/wali, dan kontak WhatsApp.
+                <p className="mt-0.5 text-[13px] text-[#4b5a6a]">
+                  Export biodata, nomor murid, dan kontak wali.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleExportPesertaExcel}
-                  disabled={filteredPeserta.length === 0}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors disabled:opacity-50"
-                >
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                  <span>Export Excel Peserta</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleExportPesertaExcel}
+                disabled={filteredPeserta.length === 0}
+                className="dm-btn-primary !py-2 disabled:opacity-50"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span>Export Excel peserta</span>
+              </button>
             </div>
 
-            {/* Filter Program */}
-            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
-              <div className="w-60">
-                <select
-                  value={filterProgram}
-                  onChange={(e) => setFilterProgram(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs text-slate-700"
-                >
-                  <option value="all">Semua Program Kelas</option>
-                  <option value="Office Pemula">Paket Office Pemula</option>
-                  <option value="Office + Desain">Paket Office + Desain</option>
-                </select>
-              </div>
+            <div className="flex flex-wrap items-center gap-2 border-t border-[#e3e9ef] pt-3">
+              <select
+                value={filterProgram}
+                onChange={(e) => setFilterProgram(e.target.value)}
+                className="dm-input !w-60"
+              >
+                <option value="all">Semua program kelas</option>
+                <option value="Office Pemula">Paket Office Pemula</option>
+                <option value="Office + Desain">Paket Office + Desain</option>
+              </select>
 
-              <span className="text-xs text-slate-500">
-                Total: <strong>{filteredPeserta.length}</strong> peserta terdaftar
+              <span className="text-[12px] tabular-nums text-[#4b5a6a]">
+                {filteredPeserta.length} peserta terdaftar
               </span>
             </div>
-          </div>
+          </Card>
 
           {/* Table Preview */}
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
+          <Card>
             {filteredPeserta.length > 0 ? (
-              <div className="overflow-x-auto max-h-96">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 sticky top-0 border-b border-slate-200">
+              <div className="max-h-96 overflow-x-auto">
+                <table className="dm-table w-full">
+                  <thead className="sticky top-0">
                     <tr>
-                      <th className="px-4 py-2.5">No</th>
-                      <th className="px-4 py-2.5">Nomor Murid</th>
-                      <th className="px-4 py-2.5">Nama Peserta</th>
-                      <th className="px-4 py-2.5">Program</th>
-                      <th className="px-4 py-2.5">No. WA</th>
-                      <th className="px-4 py-2.5">Orang Tua/Wali</th>
-                      <th className="px-4 py-2.5">Status</th>
+                      <th>No</th>
+                      <th>Nomor murid</th>
+                      <th>Nama peserta</th>
+                      <th>Program</th>
+                      <th>No. WA</th>
+                      <th>Orang tua/wali</th>
+                      <th>Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody>
                     {filteredPeserta.map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-2 font-mono text-slate-400">{idx + 1}</td>
-                        <td className="px-4 py-2 font-mono font-bold text-sky-700">{item.nomorMurid}</td>
-                        <td className="px-4 py-2 font-semibold text-slate-900">{item.namaPeserta}</td>
-                        <td className="px-4 py-2 text-slate-600">{item.programKelas}</td>
-                        <td className="px-4 py-2 font-mono text-slate-600">{item.nomorWA}</td>
-                        <td className="px-4 py-2 text-slate-600">{item.orangTua}</td>
-                        <td className="px-4 py-2">
-                          <span className="inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                            {item.statusPeserta}
-                          </span>
+                      <tr key={item.id}>
+                        <td className="font-mono tabular-nums text-[#8494a5]">{idx + 1}</td>
+                        <td className="whitespace-nowrap">
+                          <span className="dm-badge dm-badge-id">{item.nomorMurid}</span>
+                        </td>
+                        <td className="whitespace-nowrap font-semibold text-[#1a2430]">{item.namaPeserta}</td>
+                        <td className="whitespace-nowrap text-[#4b5a6a]">{item.programKelas}</td>
+                        <td className="whitespace-nowrap font-mono tabular-nums text-[#4b5a6a]">{item.nomorWA}</td>
+                        <td className="whitespace-nowrap text-[#4b5a6a]">{item.orangTua}</td>
+                        <td className="whitespace-nowrap">
+                          <StatusBadge value={item.statusPeserta} />
                         </td>
                       </tr>
                     ))}
@@ -468,11 +468,13 @@ export const LaporanExportPage: React.FC<LaporanExportPageProps> = ({ profil }) 
                 </table>
               </div>
             ) : (
-              <div className="p-8 text-center text-xs text-slate-400">
-                Belum ada data peserta.
-              </div>
+              <EmptyState
+                icon={<Users className="h-5 w-5" />}
+                title="Belum ada data peserta"
+                description="Belum ada data peserta yang cocok dengan filter."
+              />
             )}
-          </div>
+          </Card>
         </div>
       )}
     </div>

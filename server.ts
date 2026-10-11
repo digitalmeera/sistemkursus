@@ -73,9 +73,41 @@ async function startServer() {
     }
   });
 
+  // IMAGE PROXY: /api/img?url=... (untuk export kartu, hindari CORS/taint)
+  app.get('/api/img', async (req, res) => {
+    try {
+      const rawUrl = req.query.url as string;
+      if (!rawUrl) return res.status(400).json({ success: false, message: 'Parameter url wajib.' });
+      const target = new URL(rawUrl);
+      if (target.protocol !== 'https:' && target.protocol !== 'http:') {
+        return res.status(400).json({ success: false, message: 'Hanya http(s).' });
+      }
+      const upstream = await fetch(target.toString(), {
+        redirect: 'follow',
+        headers: { 'User-Agent': 'Mozilla/5.0 (DIGITALMEERA card export)' },
+      });
+      if (!upstream.ok || !upstream.body) {
+        return res.status(502).json({ success: false, message: `Gagal mengambil gambar (${upstream.status}).` });
+      }
+      const contentType = upstream.headers.get('content-type') || '';
+      if (!contentType.startsWith('image/')) {
+        return res.status(502).json({ success: false, message: 'URL bukan gambar.' });
+      }
+      const buf = Buffer.from(await upstream.arrayBuffer());
+      if (buf.length > 8 * 1024 * 1024) {
+        return res.status(502).json({ success: false, message: 'Gambar terlalu besar.' });
+      }
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.status(200).send(buf);
+    } catch (err: any) {
+      return res.status(502).json({ success: false, message: `Proxy gambar gagal: ${err?.message || err}` });
+    }
+  });
+
   // Health check endpoint
-  app.get('/api/health', (req, res) => {
-    res.json({
+  app.get('/api/health', (req, res) => {    res.json({
       status: 'ok',
       gasUrl: GAS_URL,
       spreadsheetId: '18d2NpE-Y4cm19LjNWo7UPZdMPdcv8CQImRcF3jupTa8',

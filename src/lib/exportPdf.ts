@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { Peserta, Absensi, ProfilLembaga, CardTemplateConfig } from '../types';
 import { generateQrCodeDataUrl } from './qrcode';
+import { resolveCardImage, sniffImageFormat } from './remoteImage';
 
 const CARD_WIDTH_MM = 85.6;
 const CARD_HEIGHT_MM = 53.98;
@@ -160,11 +161,12 @@ async function renderCardOnPdfPage(
     doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     doc.rect(0, 0, CARD_WIDTH_MM, 2, 'F');
 
-    // LOGO LEMBAGA pada PDF
+    // LOGO LEMBAGA pada PDF (Drive URL di-resolve via proxy agar ikut tercetak)
     let textStartX = 5;
-    if (profil.logo && (profil.logo.startsWith('data:image') || profil.logo.startsWith('http'))) {
+    const logoSrc = await resolveCardImage(profil.logo);
+    if (logoSrc) {
       try {
-        doc.addImage(profil.logo, 'PNG', 4.5, 3.2, 7.5, 7.5);
+        doc.addImage(logoSrc, sniffImageFormat(logoSrc), 4.5, 3.2, 7.5, 7.5);
         textStartX = 13.5;
       } catch {
         drawDefaultLogoEmblemPdf(doc, 4.5, 3.2, 7.5, accentColor);
@@ -210,10 +212,11 @@ async function renderCardOnPdfPage(
   doc.setLineWidth(0.3);
   doc.roundedRect(photoX, photoY, photoW, photoH, 0.8, 0.8, 'D');
 
-  if (peserta.foto && peserta.foto.startsWith('data:image')) {
+  const fotoSrc = await resolveCardImage(peserta.foto);
+  if (fotoSrc) {
     try {
       // Crop image to exact 19x24.5 aspect ratio with object-cover
-      const croppedPhotoDataUrl = await cropImageToCoverDataUrl(peserta.foto, 380, 490);
+      const croppedPhotoDataUrl = await cropImageToCoverDataUrl(fotoSrc, 380, 490);
       doc.addImage(croppedPhotoDataUrl, 'JPEG', photoX + 0.3, photoY + 0.3, photoW - 0.6, photoH - 0.6);
     } catch {
       drawPhotoPlaceholder(doc, photoX, photoY, photoW, photoH, peserta.namaPeserta);
@@ -435,10 +438,10 @@ export async function downloadCardAsJpg(
     // LOGO LEMBAGA pada Canvas JPG
     let headerTextStartX = 42;
     let logoDrawn = false;
-    if (profil.logo && (profil.logo.startsWith('data:image') || profil.logo.startsWith('http'))) {
+    const logoSrcJpg = await resolveCardImage(profil.logo);
+    if (logoSrcJpg) {
       try {
         const logoImg = new Image();
-        logoImg.crossOrigin = 'anonymous';
         await new Promise((resolve) => {
           logoImg.onload = () => {
             ctx.drawImage(logoImg, 42, 28, 64, 64);
@@ -446,7 +449,7 @@ export async function downloadCardAsJpg(
             resolve(true);
           };
           logoImg.onerror = () => resolve(false);
-          logoImg.src = profil.logo!;
+          logoImg.src = logoSrcJpg;
         });
       } catch {}
     }
@@ -502,9 +505,10 @@ export async function downloadCardAsJpg(
   ctx.stroke();
 
   let photoRendered = false;
-  if (peserta.foto && peserta.foto.startsWith('data:image')) {
+  const fotoSrcJpg = await resolveCardImage(peserta.foto);
+  if (fotoSrcJpg) {
     try {
-      const croppedPhotoUrl = await cropImageToCoverDataUrl(peserta.foto, photoW * 2, photoH * 2);
+      const croppedPhotoUrl = await cropImageToCoverDataUrl(fotoSrcJpg, photoW * 2, photoH * 2);
       const img = new Image();
       await new Promise((resolve) => {
         img.onload = () => {

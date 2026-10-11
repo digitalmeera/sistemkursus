@@ -272,42 +272,42 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
       subtitle={isEditMode ? `Nomor Murid: ${nomorMurid}` : 'Lengkapi seluruh data pendaftaran peserta Digitalmeera'}
       maxWidth="3xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {errorMsg && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-800 animate-in fade-in">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
-            <p className="font-medium">{errorMsg}</p>
+          <div className="flex items-start gap-2 rounded-md border border-[#f0c9c9] bg-[#fdf0f0] p-3 text-[#a02a2a]">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <p className="text-[12px] font-medium">{errorMsg}</p>
           </div>
         )}
 
         {/* Section 1: Foto Siswa & Nomor Murid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-md border border-[#e3e9ef] bg-white p-4">
           {/* Foto Preview & Upload */}
           <div className="sm:col-span-1 flex flex-col items-center">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <span className="text-[12px] font-semibold text-[#1a2430] mb-2">
               Foto Siswa
             </span>
-            <div className="relative h-32 w-28 overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-white shadow-xs flex items-center justify-center">
+            <div className="relative h-32 w-28 overflow-hidden rounded-md border border-[#e3e9ef] bg-white flex items-center justify-center">
               {foto ? (
                 <>
-                  <img src={foto} alt="Preview Foto" className="h-full w-full object-cover" />
+                  <img src={foto} alt="Preview Foto" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setFoto('')}
-                    className="absolute top-1 right-1 rounded-full bg-slate-900/70 p-1 text-white hover:bg-red-600 transition-colors"
+                    className="absolute top-1 right-1 rounded-full border border-[#e3e9ef] bg-white p-1 text-[#1a2430]"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </>
               ) : (
-                <div className="text-center p-2 text-slate-400">
-                  <Upload className="mx-auto h-6 w-6 mb-1 text-slate-400" />
+                <div className="text-center p-2 text-[#8494a5]">
+                  <Upload className="mx-auto h-6 w-6 mb-1" />
                   <span className="text-[10px] leading-tight block">Upload Foto JPG/PNG</span>
                 </div>
               )}
             </div>
 
-            <label className="mt-2.5 cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50">
+            <label className="dm-btn-secondary mt-2.5 cursor-pointer">
               Pilih Foto
               <input
                 type="file"
@@ -316,13 +316,13 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
                 className="hidden"
               />
             </label>
-            <span className="text-[10px] text-slate-600 mt-1">Maks. 2MB (Opsional)</span>
+            <span className="text-[11px] text-[#4b5a6a] mt-1">Maks. 2MB (Opsional)</span>
           </div>
 
           {/* Nomor Murid (Otomatis & Read-Only) */}
           <div className="sm:col-span-2 space-y-4">
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <label className="text-[12px] font-semibold text-[#1a2430]">
                 Nomor Murid
               </label>
               <div className="mt-1 flex items-center gap-2">
@@ -330,10 +330,10 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
                   type="text"
                   value={nomorMurid}
                   disabled
-                  className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-2.5 font-mono text-sm font-bold text-slate-700 cursor-not-allowed shadow-2xs"
+                  className="dm-input mt-1 font-mono"
                 />
               </div>
-              <p className="text-[11px] text-slate-600 mt-1">
+              <p className="text-[11px] text-[#4b5a6a] mt-1">
                 {isEditMode
                   ? 'Nomor murid permanen dan tidak dapat diubah.'
                   : 'Nomor murid dibuat otomatis oleh backend (contoh: DM0001, DM0002).'}
@@ -342,7 +342,7 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
 
             {/* Nama Peserta */}
             <div>
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <label className="text-[12px] font-semibold text-[#1a2430]">
                 Nama Lengkap Peserta <span className="text-red-500">*</span>
               </label>
               <input
@@ -351,16 +351,16 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
                 onChange={(e) => setNamaPeserta(e.target.value)}
                 placeholder="Contoh: Muhammad Farhan"
                 required
-                className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input mt-1"
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Informasi Kelahiran & Identitas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-md border border-[#e3e9ef] bg-white p-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Tempat Lahir <span className="text-red-500">*</span>
             </label>
             <input
@@ -369,12 +369,12 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
               onChange={(e) => setTempatLahir(e.target.value)}
               placeholder="Contoh: Jakarta"
               required
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             />
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Tanggal Lahir <span className="text-red-500">*</span>
             </label>
             <input
@@ -382,18 +382,18 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
               value={tanggalLahir}
               onChange={(e) => setTanggalLahir(e.target.value)}
               required
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             />
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Jenis Kelamin <span className="text-red-500">*</span>
             </label>
             <select
               value={jenisKelamin}
               onChange={(e) => setJenisKelamin(e.target.value as any)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             >
               <option value="Laki-laki">Laki-laki</option>
               <option value="Perempuan">Perempuan</option>
@@ -401,13 +401,13 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Agama <span className="text-red-500">*</span>
             </label>
             <select
               value={agama}
               onChange={(e) => setAgama(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             >
               <option value="Islam">Islam</option>
               <option value="Kristen">Kristen</option>
@@ -423,19 +423,19 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
                 onChange={(e) => setCustomAgama(e.target.value)}
                 placeholder="Tuliskan agama..."
                 required
-                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                className="dm-input mt-2"
               />
             )}
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Status Peserta / Pendidikan <span className="text-red-500">*</span>
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             >
               <option value="Siswa SD/MI">Siswa SD/MI</option>
               <option value="Siswa SMP/MTs">Siswa SMP/MTs</option>
@@ -445,7 +445,7 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Nomor WhatsApp / Telpon <span className="text-red-500">*</span>
             </label>
             <input
@@ -454,15 +454,15 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
               onChange={(e) => setNomorWA(e.target.value)}
               placeholder="Contoh: 081234567890"
               required
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             />
           </div>
         </div>
 
         {/* Section 3: Orang Tua & Alamat */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-md border border-[#e3e9ef] bg-white p-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Nama Orang Tua / Wali <span className="text-red-500">*</span>
             </label>
             <input
@@ -471,18 +471,18 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
               onChange={(e) => setOrangTua(e.target.value)}
               placeholder="Nama ayah/ibu/wali"
               required
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             />
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Status Keanggotaan
             </label>
             <select
               value={statusPeserta}
               onChange={(e) => setStatusPeserta(e.target.value as any)}
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             >
               <option value="Aktif">Aktif</option>
               <option value="Nonaktif">Nonaktif</option>
@@ -491,7 +491,7 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
           </div>
 
           <div className="sm:col-span-2">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="text-[12px] font-semibold text-[#1a2430]">
               Alamat Lengkap <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -500,22 +500,22 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
               onChange={(e) => setAlamat(e.target.value)}
               placeholder="Alamat rumah lengkap..."
               required
-              className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="dm-input mt-1"
             />
           </div>
         </div>
 
         {/* Section 4: Program Kelas & Biaya Otomatis */}
-        <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
+        <div className="rounded-md border border-[#e3e9ef] bg-white p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-sky-900 uppercase tracking-wider">
+              <label className="text-[12px] font-semibold text-[#1a2430]">
                 Pilih Program Kelas <span className="text-red-500">*</span>
               </label>
               <select
                 value={programKelas}
                 onChange={(e) => setProgramKelas(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-sky-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 font-medium"
+                className="dm-input mt-1"
               >
                 <option value="Paket Office Pemula">Paket Office Pemula</option>
                 <option value="Paket Office + Desain">Paket Office + Desain</option>
@@ -523,33 +523,33 @@ export const FormPesertaModal: React.FC<FormPesertaModalProps> = ({
             </div>
 
             <div>
-              <label className="text-xs font-bold text-sky-900 uppercase tracking-wider">
+              <label className="text-[12px] font-semibold text-[#1a2430]">
                 Biaya Program (Otomatis)
               </label>
               <input
                 type="text"
                 value={hargaProgram}
                 readOnly
-                className="mt-1 w-full rounded-xl border border-sky-300 bg-sky-100/70 px-3.5 py-2 text-sm font-bold text-sky-900 cursor-not-allowed shadow-2xs"
+                className="dm-input mt-1"
               />
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#e3e9ef]">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            className="dm-btn-secondary"
           >
             Batal
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-sky-700 transition-colors disabled:opacity-50"
+            className="dm-btn-primary"
           >
             {loading ? (
               <span>Menyimpan ke Spreadsheet...</span>

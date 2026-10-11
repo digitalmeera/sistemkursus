@@ -3,16 +3,15 @@ import { Peserta, ProfilLembaga, CardTemplateConfig } from '../types';
 import { gasApi } from '../services/gasApi';
 import { downloadSingleCardPdf, downloadAllCardsPdf, downloadCardAsJpg } from '../lib/exportPdf';
 import { generateQrCodeDataUrl } from '../lib/qrcode';
-import { 
-  CreditCard, 
-  Download, 
-  FileText, 
-  Image as ImageIcon, 
-  Search, 
-  CheckCircle2,
+import { PageHeader, Card, Toast, EmptyState } from '../components/ui';
+import {
+  Download,
+  FileText,
+  Image as ImageIcon,
+  Search,
   QrCode as QrCodeIcon,
-  Sparkles,
-  RefreshCw
+  RefreshCw,
+  CreditCard,
 } from 'lucide-react';
 
 interface KartuPesertaPageProps {
@@ -39,32 +38,18 @@ const StudentCardItem: React.FC<{
 
   const hasCustomTemplate = !!(cardConfig.useCustomTemplate && cardConfig.templateImage);
 
-  // Theme colors
-  let themeBg = 'from-slate-900 to-slate-800';
-  let themeAccent = 'bg-sky-500';
-  let themeBadge = 'bg-sky-500 text-white';
-
-  if (cardConfig.theme === 'emerald-green') {
-    themeBg = 'from-emerald-950 to-teal-900';
-    themeAccent = 'bg-emerald-500';
-    themeBadge = 'bg-emerald-500 text-white';
-  } else if (cardConfig.theme === 'royal-indigo') {
-    themeBg = 'from-indigo-950 to-slate-900';
-    themeAccent = 'bg-indigo-500';
-    themeBadge = 'bg-indigo-500 text-white';
-  } else if (cardConfig.theme === 'crimson-amber') {
-    themeBg = 'from-red-950 to-slate-900';
-    themeAccent = 'bg-amber-500';
-    themeBadge = 'bg-amber-500 text-slate-900';
-  }
+  // Solid navy profesional — tanpa gradient AI slop
+  const themeBg = cardConfig.theme === 'emerald-green' ? '#0d3b2e'
+    : cardConfig.theme === 'royal-indigo' ? '#1e2a5a'
+    : cardConfig.theme === 'crimson-amber' ? '#4a1d1d'
+    : '#0f4c73';
 
   return (
-    <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div className="flex flex-col rounded-lg border border-[#e3e9ef] bg-white p-3">
       {/* Visual Card (Aspect Ratio ID-1 standard ~85.60 x 53.98 = 1.586) */}
       <div
-        className={`relative w-full aspect-[85.6/53.98] overflow-hidden rounded-2xl ${
-          hasCustomTemplate ? 'bg-slate-900' : `bg-gradient-to-br ${themeBg}`
-        } p-3 text-white shadow-md flex flex-col justify-between`}
+        className="relative flex aspect-[85.6/53.98] w-full flex-col justify-between overflow-hidden rounded-md p-3 text-white"
+        style={{ background: hasCustomTemplate ? '#0b2f47' : themeBg }}
       >
         {/* Background Custom Template if enabled */}
         {hasCustomTemplate && cardConfig.templateImage && (
@@ -76,59 +61,63 @@ const StudentCardItem: React.FC<{
         )}
 
         {/* Content Overlay */}
-        <div className="relative z-10 flex flex-col justify-between h-full">
+        <div className="relative z-10 flex h-full flex-col justify-between">
           {/* Header of Card */}
           {!hasCustomTemplate ? (
-            <div className="flex items-center justify-between border-b border-white/10 pb-1.5 pt-0.5">
-              <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-center justify-between border-b border-white/15 pb-1.5 pt-0.5">
+              <div className="flex min-w-0 items-center gap-1.5">
                 {profil.logo ? (
-                  <img src={profil.logo} alt="Logo" className="h-5 w-5 rounded object-contain bg-white/20 p-0.5" />
+                  <img src={profil.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} className="h-5 w-5 rounded bg-white/25 object-contain p-0.5" />
                 ) : (
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/20 text-[9px] font-black">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/25 text-[9px] font-semibold">
                     DM
                   </div>
                 )}
                 <div className="min-w-0">
-                  <h4 className="text-[11px] font-bold tracking-wider leading-none text-white truncate">
+                  <h4 className="truncate text-[11px] font-semibold leading-none text-white">
                     {profil.namaLembaga || 'DIGITALMEERA'}
                   </h4>
-                  <span className="text-[7px] text-sky-200 uppercase tracking-widest font-medium">
+                  <span className="text-[7px] font-medium uppercase tracking-wide text-white/70">
                     Kartu Peserta Resmi
                   </span>
                 </div>
               </div>
-              <span className="shrink-0 text-[8px] font-bold uppercase tracking-wider bg-white/15 px-1.5 py-0.5 rounded text-white/90">
-                OFFICIAL
+              <span className="shrink-0 rounded border border-white/25 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
+                Official
               </span>
             </div>
           ) : (
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-1.5">
                 {profil.logo && (
-                  <img src={profil.logo} alt="Logo" className="h-5 w-5 rounded object-contain bg-white/40 p-0.5" />
+                  <img src={profil.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} className="h-5 w-5 rounded bg-white/40 object-contain p-0.5" />
                 )}
-                <span className="text-[9px] font-bold text-white drop-shadow-md">
+                <span className="text-[9px] font-semibold text-white">
                   {profil.namaLembaga || 'DIGITALMEERA'}
                 </span>
               </div>
-              <span className="text-[7.5px] font-extrabold uppercase tracking-wider bg-black/40 backdrop-blur-xs px-1.5 py-0.5 rounded text-white border border-white/20">
-                OFFICIAL
+              <span className="rounded border border-white/25 bg-black/40 px-1.5 py-0.5 text-[7.5px] font-semibold uppercase tracking-wide text-white">
+                Official
               </span>
             </div>
           )}
 
           {/* Middle Body Layout: Foto (Kiri) | Info (Tengah) | QR Code 1:1 (Kanan) */}
-          <div className="flex items-center gap-2.5 my-auto">
+          <div className="my-auto flex items-center gap-2.5">
             {/* Foto Siswa (Kiri) dengan preview object-cover */}
-            <div className="h-16 w-13 sm:h-18 sm:w-14 shrink-0 overflow-hidden rounded-lg border-2 border-white/40 bg-slate-800 shadow-sm flex items-center justify-center">
+            <div className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-white/40 bg-white/15 sm:h-[72px] sm:w-14">
               {peserta.foto ? (
                 <img
                   src={peserta.foto}
                   alt={peserta.namaPeserta}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="font-bold text-xs text-white/60">
+                <span className="text-xs font-semibold text-white/70">
                   {peserta.namaPeserta.slice(0, 2).toUpperCase()}
                 </span>
               )}
@@ -136,54 +125,54 @@ const StudentCardItem: React.FC<{
 
             {/* Student Info (Tengah) - Tanpa Harga Program */}
             <div className="flex-1 min-w-0 pr-1">
-              <p className="text-[11px] sm:text-[12px] font-bold text-white truncate leading-snug drop-shadow-sm">
+              <p className="truncate text-[11px] font-semibold leading-snug text-white sm:text-[12px]">
                 {peserta.namaPeserta}
               </p>
 
               <div className="mt-0.5 inline-block">
-                <span className={`font-mono text-[8.5px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs ${themeBadge}`}>
+                <span className="rounded bg-white/95 px-1.5 py-0.5 font-mono text-[8.5px] font-semibold text-[#0f4c73] sm:text-[9px]">
                   {peserta.nomorMurid}
                 </span>
               </div>
 
               <div className="mt-1">
-                <p className="text-[6.5px] text-slate-300 uppercase tracking-wider font-semibold">
+                <p className="text-[6.5px] font-semibold uppercase tracking-wide text-white/60">
                   Program Kelas:
                 </p>
-                <p className="text-[8.5px] sm:text-[9px] text-white font-medium truncate drop-shadow-xs">
+                <p className="truncate text-[8.5px] font-medium text-white sm:text-[9px]">
                   {peserta.programKelas.replace(/\s*—\s*Rp[\d.,]+/g, '')}
                 </p>
               </div>
 
               <div className="mt-1">
-                <span className="inline-block text-[7px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                <span className="inline-block rounded border border-white/30 px-1.5 py-0.5 text-[7px] font-semibold text-white">
                   {peserta.statusPeserta || 'Aktif'}
                 </span>
               </div>
             </div>
 
             {/* QR Code di Sebelah Kanan (Rasio 1:1) */}
-            <div className="shrink-0 flex flex-col items-center justify-center rounded-xl bg-white p-1 sm:p-1.5 shadow-md border border-slate-200">
+            <div className="flex shrink-0 flex-col items-center justify-center rounded-md border border-white/40 bg-white p-1 sm:p-1.5">
               {qrCodeUrl ? (
                 <img
                   src={qrCodeUrl}
                   alt={`QR Code ${peserta.nomorMurid}`}
-                  className="h-12 w-12 sm:h-14 sm:w-14 aspect-square object-contain"
+                  className="aspect-square h-12 w-12 object-contain sm:h-14 sm:w-14"
                 />
               ) : (
-                <div className="h-12 w-12 sm:h-14 sm:w-14 aspect-square bg-slate-100 flex items-center justify-center">
-                  <QrCodeIcon className="h-6 w-6 text-slate-400 animate-pulse" />
+                <div className="flex aspect-square h-12 w-12 items-center justify-center bg-[#eef1f4] sm:h-14 sm:w-14">
+                  <QrCodeIcon className="h-6 w-6 text-[#8494a5]" />
                 </div>
               )}
-              <span className="text-[6.5px] font-mono font-bold text-slate-700 tracking-wider mt-0.5">
+              <span className="mt-0.5 font-mono text-[6.5px] font-semibold tracking-wide text-[#1a2430]">
                 SCAN QR
               </span>
             </div>
           </div>
 
           {/* Footer Website www.digitalmeera.tech */}
-          <div className="text-center pt-0.5">
-            <span className="text-[6.5px] font-semibold text-slate-200 tracking-wider drop-shadow-xs">
+          <div className="pt-0.5 text-center">
+            <span className="text-[6.5px] font-medium tracking-wide text-white/70">
               www.digitalmeera.tech
             </span>
           </div>
@@ -191,29 +180,26 @@ const StudentCardItem: React.FC<{
       </div>
 
       {/* Card Controls */}
-      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
-        <div className="flex items-center gap-1.5 text-slate-500">
-          <span className="font-mono font-bold text-slate-800">{peserta.nomorMurid}</span>
-          <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
-            QR Code 1:1
-          </span>
+      <div className="mt-2.5 flex items-center justify-between border-t border-[#e3e9ef] pt-2.5 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-[12px] font-semibold text-[#1a2430]">{peserta.nomorMurid}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => downloadCardAsJpg(peserta, profil, cardConfig)}
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+            className="dm-btn-secondary !px-2.5 !py-1.5 !text-[12px]"
             title="Download format Gambar JPG (300 DPI)"
           >
-            <ImageIcon className="h-3.5 w-3.5 text-emerald-600" />
+            <ImageIcon className="h-3.5 w-3.5" />
             <span>JPG</span>
           </button>
 
           <button
             type="button"
             onClick={() => downloadSingleCardPdf(peserta, profil, cardConfig)}
-            className="inline-flex items-center gap-1 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-sky-700 transition-colors"
+            className="dm-btn-primary !px-3 !py-1.5 !text-[12px]"
             title="Download format PDF (85.60 x 53.98 mm)"
           >
             <FileText className="h-3.5 w-3.5" />
@@ -320,85 +306,68 @@ export const KartuPesertaPage: React.FC<KartuPesertaPageProps> = ({ profil }) =>
   );
 
   return (
-    <div className="space-y-6">
-      {/* Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-xs sm:text-sm font-semibold text-white shadow-xl animate-in slide-in-from-bottom-5">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+    <div className="space-y-4">
+      <Toast message={toastMessage} />
 
-      {/* Header and Download All */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Kartu Peserta Siswa
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Kartu standar ID-1 (85,60 mm &times; 53,98 mm) dengan QR Code 1:1 di sisi kanan tanpa mencantumkan harga.
-          </p>
-        </div>
+      <PageHeader
+        title="Kartu Peserta"
+        description="Ukuran ID-1 (85,60 × 53,98 mm), QR di kanan."
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSyncing(true);
+                gasApi.getPeserta().then(res => {
+                  if (res.success && res.data) setPesertaList(res.data.filter(p => p.statusPeserta !== 'Deleted'));
+                  setIsSyncing(false);
+                }).catch(() => setIsSyncing(false));
+              }}
+              disabled={isSyncing}
+              className="dm-btn-secondary !py-2"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Menyinkronkan…' : 'Segarkan'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadAll}
+              disabled={downloadingAll || pesertaList.length === 0}
+              className="dm-btn-primary !py-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>{downloadingAll ? 'Menyiapkan…' : 'Unduh semua (PDF)'}</span>
+            </button>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSyncing(true);
-              gasApi.getPeserta().then(res => {
-                if (res.success && res.data) setPesertaList(res.data.filter(p => p.statusPeserta !== 'Deleted'));
-                setIsSyncing(false);
-              }).catch(() => setIsSyncing(false));
-            }}
-            disabled={isSyncing}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-all disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin text-sky-600' : 'text-slate-500'}`} />
-            <span>{isSyncing ? 'Menyinkronkan...' : 'Segarkan'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDownloadAll}
-            disabled={downloadingAll || pesertaList.length === 0}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" />
-            <span>{downloadingAll ? 'Menyiapkan PDF...' : 'Download Semua Kartu (PDF)'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Template Status Notice */}
       {cardConfig.useCustomTemplate && cardConfig.templateImage && (
-        <div className="flex items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-2.5 text-xs font-medium text-sky-800">
-          <Sparkles className="h-4 w-4 text-sky-600 shrink-0" />
-          <span>Kartu menggunakan template desain kustom latar belakang yang diunggah dari Pengaturan.</span>
-        </div>
+        <Card className="px-4 py-2.5 text-[12px] text-[#4b5a6a]">
+          Menggunakan template latar kustom dari Pengaturan.
+        </Card>
       )}
 
-      {/* Search Input */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+      <Card className="p-3">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8494a5]" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari kartu berdasarkan nama murid atau nomor murid (DM000X)..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+            placeholder="Cari nama atau nomor murid…"
+            className="dm-input !pl-9"
           />
         </div>
-      </div>
+      </Card>
 
-      {/* Card Grid */}
       {(loading || (isSyncing && pesertaList.length === 0)) ? (
-        <div className="p-12 text-center text-slate-400 text-xs">
-          <RefreshCw className="h-6 w-6 animate-spin text-sky-600 mx-auto mb-2" />
-          Memuat kartu peserta...
-        </div>
+        <Card className="p-10 text-center text-[12px] text-[#8494a5]">
+          <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin" />
+          Memuat kartu…
+        </Card>
       ) : filtered.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((peserta) => (
             <StudentCardItem
               key={peserta.id}
@@ -409,17 +378,13 @@ export const KartuPesertaPage: React.FC<KartuPesertaPageProps> = ({ profil }) =>
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-xs">
-          <CreditCard className="mx-auto h-10 w-10 text-slate-300" />
-          <h4 className="mt-3 text-sm font-bold text-slate-800">
-            {searchTerm ? 'Tidak ada kartu yang cocok' : 'Belum Ada Kartu Peserta'}
-          </h4>
-          <p className="mt-1 text-xs text-slate-500">
-            {searchTerm
-              ? 'Silakan coba kata kunci pencarian yang lain'
-              : 'Daftarkan peserta di menu Data Peserta untuk membuat kartu otomatis.'}
-          </p>
-        </div>
+        <Card>
+          <EmptyState
+            icon={<CreditCard className="h-5 w-5" />}
+            title={searchTerm ? 'Tidak ada hasil' : 'Belum ada kartu'}
+            description={searchTerm ? 'Ubah kata kunci.' : 'Daftarkan peserta untuk membuat kartu otomatis.'}
+          />
+        </Card>
       )}
     </div>
   );

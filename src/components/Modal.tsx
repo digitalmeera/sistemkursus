@@ -55,29 +55,29 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Dialog box */}
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} my-8 overflow-hidden rounded-2xl bg-white shadow-2xl transition-all border border-slate-200 z-10 max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${maxWidthClasses[maxWidth]} my-8 overflow-hidden rounded-lg bg-white shadow-xl transition-all border border-[#e3e9ef] z-10 max-h-[90vh] flex flex-col`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/60">
+        <div className="flex items-center justify-between border-b border-[#e3e9ef] px-5 py-3.5">
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+            <h3 className="text-[15px] font-semibold text-[#1a2430] leading-tight">
               {title}
             </h3>
             {subtitle && (
-              <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+              <p className="text-[12px] text-[#4b5a6a] mt-0.5">{subtitle}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 transition-colors"
+            className="rounded-md p-1.5 text-[#8494a5] hover:bg-[#f0f3f6] hover:text-[#1a2430]"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 text-slate-700">
+        <div className="flex-1 overflow-y-auto p-5 text-[#1a2430]">
           {children}
         </div>
       </div>
